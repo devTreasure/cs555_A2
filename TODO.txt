@@ -1,0 +1,8 @@
+1. Create Registry node
+2. create one Node
+3.Create finger table
+4.Create Another node
+5.Create Finger table
+6.Try lookup(2) and search(01) file.
+7.Add another node
+8.Try finger table updates.
