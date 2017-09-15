@@ -1,15 +1,16 @@
 package A2.Discovery;
 
+import java.awt.List;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
-import org.omg.CORBA.PUBLIC_MEMBER;
 
-public class DiscoveryNode {
+public class DiscoveryNode  implements Runnable  {
 
 	
 	   public String discoveryNodeIP;
@@ -17,52 +18,38 @@ public class DiscoveryNode {
 	   public static final String EXIT_COMMAND = "exit";
 	   public String discoveryNodeName;
 	   public Socket socket;
+	   public ArrayList<A2.Discovery.RingNodes> ringNodes=null;
 	   
+	   
+	   public DiscoveryNode()
+	   {
+		   ringNodes= new  ArrayList<A2.Discovery.RingNodes>();
+	   }
+	   
+	   public void intiateRingNodeRegistration(String nodeNum)
+	   {
+		   
+		   RingNodes ring= new RingNodes();
+		   ring.rinNodename = nodeNum;
+		   
+		   if(! this.ringNodes.contains(ring.rinNodename ))
+			   
+		   {
+			   this.ringNodes.add(ring);
+		   }
+		   else
+		   {
+			   System.out.println("Please use/register with diffrent number");
+		   }
+		
+	   }
 	   
 	   
 	public static void main(String[] args) throws IOException {
-		// TODO Auto-generated method stub
-		
-		 if (args.length < 1) {
-	         System.out.println(
-	               "Error: Please pass the hostName/Machine name");
-	         System.exit(0);
-	      }
 
 	      String strHostName = "";
-	      int nodePort = 0;
-	      
-	      try {
-	    	  strHostName = (args[0]);
-	
-
-	      } catch (Exception e) {
-	         System.out.println("Error: Please provide hostName for the DiscoveryNode.");
-	         System.exit(0);
-	      }
-
+	     
 	      String[] strSplit = null;
-	      // TODO Auto-generated method stub
-	      // strSplit = strIP.split(",");
-	      /*
-	       * System.out.println(
-	       * "************************************\n 1.) Please select the ip SPACE port and enter in one line.\n 2.)"
-	       * + " Enter the START to start the node \n 3.) " + "Complete all the config IP entries" +
-	       * "\n 4.) veriy all the nodes stood up. \n 5.) Enter  \"RANDOM\" to select the communication node \n 6.) Enter \"START\" to start the round"
-	       * +
-	       * "\n 7.) Enter \"EXIT\" to exit  and stop the node \n****************************************"
-	       * );
-	       */
-
-	      System.out.println("Enter \"Start/start\" to intiate message sending ");
-
-
-	   
-
-	      InetAddress address = InetAddress.getByName(strHostName); 
-	      System.out.println(address.getHostAddress()); 
-	      System.out.println("Resolved Host name is :"); 
-	      System.out.println(address.getHostName()); 
 
 	      //collatorNode.collatorIP = strIP;
 	      //collatorNode.collatorPORT = nodePort;
@@ -72,7 +59,7 @@ public class DiscoveryNode {
 	     // thread.start();
 	      
 	      DiscoveryNode discoveryNode = new DiscoveryNode();
-
+	    
 	      
 	      discoveryNode.intializeDiscoverNode();
 	      
@@ -86,8 +73,12 @@ public class DiscoveryNode {
 	         if (EXIT_COMMAND.equalsIgnoreCase(exitStr)) {
 	            System.out.println("Exiting.");
 	            continueOperations = false;
-	         } else if ("start".equalsIgnoreCase(exitStr)) {
+	         } else if ("register".equalsIgnoreCase(exitStr)) {
+	        	 System.out.println("Enter Numeric number between 0 to 7 " );
+	        	 String nodeNumber = br.readLine();
+	             System.out.println("Enterd number is: " + nodeNumber);
 	            // collatorNode.sendMessages();
+	             
 	         } else if ("pull-traffic-summary".equalsIgnoreCase(exitStr)) {
 	           // collatorNode.trafficSummary();
 	         }
@@ -102,15 +93,29 @@ public class DiscoveryNode {
 	private  void intializeDiscoverNode() throws IOException {
 		// TODO Auto-generated method stub
 		ServerSocket sc = new ServerSocket(0);
-		
+			   // InetAddress address = InetAddress.getByName(sc.getInetAddress().getHostName()); 
+	    System.out.println("Resolved Host name is :"); 
+	    System.out.println(InetAddress.getLocalHost().getHostName()); 
+
+	    //System.out.println(address.getHostName()); 
 	    this.discoveryNodeIP = InetAddress.getLocalHost().getHostAddress();
-	    
 
 		this.discoveryNodePORT=sc.getLocalPort();
 		
-		System.out.println(this.discoveryNodeIP);
-		System.out.println("Listenning port : " + sc.getLocalPort());
+		//System.out.println(this.discoveryNodeIP);
+		System.out.println("Discovery node is hoasted at : " + this.discoveryNodeIP + "  "+ " Listenning port : " + sc.getLocalPort());
 		
+	}
+
+
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(true)
+		{
+			
+		}
 	}
 
 }
