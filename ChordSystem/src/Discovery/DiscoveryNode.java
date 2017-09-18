@@ -1,15 +1,17 @@
 package Discovery;
 
-import java.awt.List;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-
 
 public class DiscoveryNode implements Runnable {
 
@@ -19,25 +21,34 @@ public class DiscoveryNode implements Runnable {
 	public String discoveryNodeName;
 	public ServerSocket serverSocket;
 	public ArrayList<Discovery.RingNodes> ringNodes = null;
+	public String str_REG_REQUEST = "REG_REQUEST";
 
 	public DiscoveryNode() {
-		ringNodes = new ArrayList<Discovery.RingNodes>();
+		ringNodes = new ArrayList<RingNodes>();
 	}
 
-	public void intiateRingNodeRegistration(String nodeNum) {
+	public boolean intiateRingNodeRegistration(int nodeNum) {
+
+		Boolean regSucess = false;
 
 		RingNodes ring = new RingNodes();
 
-		ring.rinNodename = nodeNum;
+		ring.ringNodeID = nodeNum;
 
 		if (!this.ringNodes.contains(ring))
 
 		{
 			this.ringNodes.add(ring);
+			
+			System.out.println("Total registered nodes " + this.ringNodes.size());
+			
+			regSucess = true;
 		} else {
-			System.out.println("Please use/register with diffrent number");
+
+			regSucess = false;
 		}
 
+		return regSucess;
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -54,12 +65,12 @@ public class DiscoveryNode implements Runnable {
 		// thread.start();
 
 		DiscoveryNode discoveryNode = new DiscoveryNode();
-	
-		discoveryNode.intializeDiscoverNode();		
-		
+
+		discoveryNode.intializeDiscoverNode();
+
 		Thread t = new Thread(discoveryNode);
 		t.start();
-				
+
 		boolean continueOperations = true;
 
 		while (continueOperations) {
@@ -74,7 +85,7 @@ public class DiscoveryNode implements Runnable {
 				System.out.println("Enter Numeric number between 0 to 7 ");
 				String nodeNumber = br.readLine();
 				if (nodeNumber.length() > 0) {
-					discoveryNode.intiateRingNodeRegistration(nodeNumber);
+
 				}
 				System.out.println("Enterd number is: " + nodeNumber);
 				// collatorNode.sendMessages();
@@ -95,14 +106,14 @@ public class DiscoveryNode implements Runnable {
 		// InetAddress.getByName(sc.getInetAddress().getHostName());
 		System.out.println("Resolved Host name is :");
 		System.out.println(InetAddress.getLocalHost().getHostName());
-		
+
 		// System.out.println(address.getHostName());
 		this.discoveryNodeIP = InetAddress.getLocalHost().getHostAddress();
-       
+
 		this.discoveryNodePORT = sc.getLocalPort();
-      
-		this.serverSocket=sc;
-		// System.out.println(this.discoveryNodeIP);
+
+		this.serverSocket = sc;
+
 		System.out.println("Discovery node is hoasted at : " + this.discoveryNodeIP + "  " + " Listenning port : "
 				+ sc.getLocalPort());
 
@@ -110,56 +121,70 @@ public class DiscoveryNode implements Runnable {
 
 	@Override
 	public void run() {
-		
+
+		try {
 			receiveMessage();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
-	public void receiveMessage() {
-		
+	public void receiveMessage() throws IOException {
+
 		System.out.println("Started Discovery node receiver thread;");
-		Socket Socket =null;
-		DataInputStream din =null;
+		DataInputStream din = null;
+		DataOutputStream dout=null;
 		
+		Socket socket;
 		while (true) {
+
+			socket = serverSocket.accept();
+			System.out.println("..: RegistrationRequest Socket acceepted :...");
 			
-					
 			try {
+			
+				din = new DataInputStream(socket.getInputStream());
+				dout = new DataOutputStream(socket.getOutputStream());
 				
-				Socket = this.serverSocket.accept();
+				// int number = din.readInt();
+				int requestIdentifierLength = din.readInt();
+				byte[] identifierBytes = new byte[requestIdentifierLength];
+				din.readFully(identifierBytes);
 				
-				System.out.println("..: Socket acceepted :...");
+				String strID = new String(identifierBytes);
+				int nodeID = 0;
 				
-				din = new DataInputStream(Socket.getInputStream());
-				
-				if(din.available() > 0)
-				{
+				if (strID.equalsIgnoreCase(str_REG_REQUEST)) {
 					
-				 int number = din.readInt();
-				 
-				 System.out.println(String.format("server has received the  number : %1$d ", number));
-				 
-				 System.out.println("done");
+					nodeID = din.readInt();
+					System.out.println(strID);
+					System.out.println(String.format("server has received the  number : %1$d ", nodeID));
+
+					boolean regSuccess = this.intiateRingNodeRegistration(nodeID);
+					
+					System.out.println(strID);
+					int strResposnse = 0;
+
+					if (regSuccess) {
+						strResposnse = 111;
+					} else {
+						strResposnse = 222;
+					}
+
+					dout.writeInt(strResposnse);			
+					dout.flush();
+
 				
 				}
-				
-			} 
-			
-			catch (Exception e) 
-			{
-				e.printStackTrace();
-				
+
+				System.out.println("done");
+
 			}
-			
-			finally 
-			{
-				try {
-					if (din != null)
-						din.close();
-					if (Socket != null)
-						Socket.close();
-				} catch (IOException e) {
-					System.out.println("Error while closing resources: " + e.getMessage());
-				}
+
+			catch (Exception e) {
+				e.printStackTrace();
+
 			}
 		}
 

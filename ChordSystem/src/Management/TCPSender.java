@@ -9,10 +9,9 @@ public class TCPSender {
 	private Socket socket;
 	private DataOutputStream dout;
 
-	public TCPSender(Socket socket) throws IOException {
+	public TCPSender() throws IOException {
 		this.socket = socket;
 		
-		dout = new DataOutputStream(this.socket.getOutputStream());
 	}
 
 	public void sendData(byte[] dataToSend) throws IOException {
@@ -22,9 +21,12 @@ public class TCPSender {
 		dout.flush();
 	}
 
-	public void sendMessage() throws IOException {
+	public void sendMessage(Socket socket) throws IOException {
+		Socket sc=null;
 		try {
-		
+			
+			sc= socket;
+			dout = new DataOutputStream(sc.getOutputStream());			
 			int randomN = 191;
 			dout.writeInt(randomN);
 			dout.flush();
@@ -35,6 +37,7 @@ public class TCPSender {
 		} finally {
 			if (dout != null)
 				dout.close();
+		     	sc.close();
 		}
 	}
 

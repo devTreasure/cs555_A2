@@ -1,12 +1,13 @@
 package Discovery;
 
 public class RingNodes {
-	public String rinNodename;
+	
+	public int  ringNodeID;
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((rinNodename == null) ? 0 : rinNodename.hashCode());
+		result = prime * result + ringNodeID;
 		result = prime * result + ((ringNodeIP == null) ? 0 : ringNodeIP.hashCode());
 		result = prime * result + ringnodePORT;
 		return result;
@@ -20,10 +21,7 @@ public class RingNodes {
 		if (getClass() != obj.getClass())
 			return false;
 		RingNodes other = (RingNodes) obj;
-		if (rinNodename == null) {
-			if (other.rinNodename != null)
-				return false;
-		} else if (!rinNodename.equals(other.rinNodename))
+		if (ringNodeID != other.ringNodeID)
 			return false;
 		if (ringNodeIP == null) {
 			if (other.ringNodeIP != null)
@@ -36,5 +34,5 @@ public class RingNodes {
 	}
 	public String ringNodeIP;
 	public int ringnodePORT;
-
+	
 }
