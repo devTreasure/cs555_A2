@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -22,8 +23,9 @@ public class Node implements Runnable {
 	public Socket socket;
 	public String str_REG_REQUEST = "REG_REQUEST";
 	public boolean isRegisterd = false;
- 
-    
+	public ServerSocket serversocket;
+	public boolean isNodeAlive=false;
+
 	public Node() {
 
 	}
@@ -96,33 +98,44 @@ public class Node implements Runnable {
 		System.out.println("Please pass the IP --SPACE-- UNIQUE PORT number for the Discovery Node");
 
 		boolean continueOperations = true;
+		
 		Node node = null;
 
 		while (continueOperations) {
+			
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 			String exitStr = br.readLine();
+			
 			System.out.println("Received command is:" + exitStr);
 
 			String[] strIPandPort;
+			
 			strIPandPort = exitStr.split(" ");
 
 			System.out.println(strIPandPort.length);
 
-			if (strIPandPort != null && strIPandPort.length < 2) {
-				System.out.println("Error: Please pass the IP --SPACE-- UNIQUE PORT number of  the Discovery");
-			}
-			if (strIPandPort.length == 2) {
-				System.out.println("IP  and port value recieved and sending REGISTRATON message");
+	
+			
+			if (strIPandPort.length == 2)
+			{
+				System.out.println("IP and port value recieved and sending REGISTRATON message");
 
 				node = new Node();
+				
+			
+				ServerSocket sereverSock= new ServerSocket(0);
+		
+				node.serversocket=sereverSock;
+				
 				node.discoveryIP = strIPandPort[0];
+				
 				node.discoveryPORT = Integer.parseInt(strIPandPort[1]);
 
-				// New Thread for the receiving response
+				//TODO: New Thread for the receiving response
 
-				Thread t = new Thread(node);
-				t.start();
+				//Thread t = new Thread(node);
+				//t.start();
 
 			}
 
@@ -131,40 +144,49 @@ public class Node implements Runnable {
 				continueOperations = false;
 			} else if ("start".equalsIgnoreCase(exitStr)) {
 
-				boolean regSuccess = false;
-
-		
+				boolean regSuccess = false;		
 
 				while (!node.isRegisterd) {
-					Socket socket = new Socket(node.discoveryIP, node.discoveryPORT);
-					node.socket = socket;
 					
 					System.out.println("Enter Numeric number between 0 to 7 ");
+					
 					String nodeID = br.readLine();
+					
+					Socket socket = new Socket(node.discoveryIP, node.discoveryPORT);
+					
+					//node.socket = socket;
+					
+				
 
 					byte[] regrequest = node.str_REG_REQUEST.getBytes();
 
-					new RegistrationRequest().sendRegRequest(node.socket, regrequest, Integer.parseInt(nodeID));
+					new RegistrationRequest().sendRegRequest(socket, regrequest, Integer.parseInt(nodeID), node.serversocket.getLocalPort());
 
-					DataInputStream dinn = new DataInputStream(node.socket.getInputStream());
+					DataInputStream dinn = new DataInputStream(socket.getInputStream());
 					
 					int resp = dinn.readInt();
+					
 					System.out.println(resp);
+					
 					if (resp==111)
 					{
 						node.isRegisterd=true;
-						node.socket.close();		
+						//node.socket.close();	
 						
 						node.updateFingerTable();
 					}
+					
 					dinn.close();
 				}
+				
+				if(node.isRegisterd)
+				{
+					
+					System.out.println("Node is registerd with the Server");				
+					System.out.println("Node listenning on the port: " + node.serversocket.getLocalPort());
+				}
+				
 
-				System.out.println("Node is refgisterd with the server ");
-				/*
-				 * String nodeNumber = br.readLine(); if (nodeNumber.length() > 0) {
-				 * node.intiateNode(); } System.out.println("Enterd number is: " + nodeNumber);
-				 */
 
 			} else if ("pull-traffic-summary".equalsIgnoreCase(exitStr)) {
 				// collatorNode.trafficSummary();
@@ -172,7 +194,7 @@ public class Node implements Runnable {
 		}
 
 		System.out.println("Bye.");
-
+		
 	}
 
 	public  void updateFingerTable() {

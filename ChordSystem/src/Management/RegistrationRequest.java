@@ -12,7 +12,7 @@ public class RegistrationRequest {
 
 
 
-	public void sendRegRequest(Socket socket,byte[] dataToSend,int nodeID) throws IOException {
+	public void sendRegRequest(Socket socket,byte[] dataToSend,int nodeID, int nodeServerSocketPORT) throws IOException {
 
 
 	  DataOutputStream dout = null;
@@ -21,22 +21,35 @@ public class RegistrationRequest {
 			System.out.println(socket.isClosed());
 			
 			dout = new DataOutputStream(socket.getOutputStream());
+			
 			int dataLength = dataToSend.length;
+			
 			dout.writeInt(dataLength);
+			
+			//REQUEST_NAME
 			dout.write(dataToSend, 0, dataLength);
 			
 			//node ID
 			dout.writeInt(nodeID);			
+			
+			//PORT number of SERVER socket
+			dout.writeInt(nodeServerSocketPORT);		
+			
 			dout.flush();
 			
-		} catch (Exception e) {
+		}
+		catch (Exception e)
+		{
 			e.printStackTrace();
-		} finally {
+		} 
+		finally 
+		{
 			if (dout != null)
 			{
-				//dout.close();
+				//dout.close(); 
 				
 				//dont close socket as you are awaiting response from server
+				
 			   //socket.close();
 			}
 			

@@ -11,7 +11,10 @@ import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DiscoveryNode implements Runnable {
 
@@ -20,35 +23,59 @@ public class DiscoveryNode implements Runnable {
 	public static final String EXIT_COMMAND = "exit";
 	public String discoveryNodeName;
 	public ServerSocket serverSocket;
-	public ArrayList<Discovery.RingNodes> ringNodes = null;
+	public Map<Integer,Discovery.RingNodes> ringNodes = null;
 	public String str_REG_REQUEST = "REG_REQUEST";
 
 	public DiscoveryNode() {
-		ringNodes = new ArrayList<RingNodes>();
+		
+		ringNodes = new HashMap<Integer,Discovery.RingNodes>();
 	}
 
-	public boolean intiateRingNodeRegistration(int nodeNum) {
+	public boolean intiateRingNodeRegistration(int nodeNum,String nodeIP,int nodeserverSocketPORT,String strhostName) {
 
 		Boolean regSucess = false;
 
 		RingNodes ring = new RingNodes();
 
 		ring.ringNodeID = nodeNum;
+		
+		ring.NodehostName = strhostName;
+		
+		ring.ringNodeIP=nodeIP;
+		
+		ring.ringnodeServerSocketPORT=nodeserverSocketPORT;
+		
+		
+		System.out.println(ring.toString());
 
-		if (!this.ringNodes.contains(ring))
+		if (!this.ringNodes.containsKey(nodeNum))
 
 		{
-			this.ringNodes.add(ring);
-			
+			this.ringNodes.put(nodeNum, ring);
+
 			System.out.println("Total registered nodes " + this.ringNodes.size());
-			
+
 			regSucess = true;
+
+			//sendthePeerNodeHisPredessor();
+
 		} else {
 
 			regSucess = false;
 		}
 
 		return regSucess;
+	}
+
+	private void sendthePeerNodeHisPredessor() {
+
+		int intPredessorNode = -1;
+		int intSuccessorNode = -1;
+
+		if (this.ringNodes.size() == 0) {
+
+		}
+
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -75,21 +102,18 @@ public class DiscoveryNode implements Runnable {
 
 		while (continueOperations) {
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+			
 			String exitStr = br.readLine();
+			
 			System.out.println("Received command is:" + exitStr);
+			
 
 			if (EXIT_COMMAND.equalsIgnoreCase(exitStr)) {
+				
 				System.out.println("Exiting.");
+				
 				continueOperations = false;
-			} else if ("register".equalsIgnoreCase(exitStr)) {
-				System.out.println("Enter Numeric number between 0 to 7 ");
-				String nodeNumber = br.readLine();
-				if (nodeNumber.length() > 0) {
-
-				}
-				System.out.println("Enterd number is: " + nodeNumber);
-				// collatorNode.sendMessages();
-
+			
 			} else if ("pull-traffic-summary".equalsIgnoreCase(exitStr)) {
 				// collatorNode.trafficSummary();
 			}
@@ -102,19 +126,18 @@ public class DiscoveryNode implements Runnable {
 	private void intializeDiscoverNode() throws IOException {
 		// TODO Auto-generated method stub
 		ServerSocket sc = new ServerSocket(0);
-		// InetAddress address =
-		// InetAddress.getByName(sc.getInetAddress().getHostName());
+
 		System.out.println("Resolved Host name is :");
+	
 		System.out.println(InetAddress.getLocalHost().getHostName());
 
-		// System.out.println(address.getHostName());
 		this.discoveryNodeIP = InetAddress.getLocalHost().getHostAddress();
 
 		this.discoveryNodePORT = sc.getLocalPort();
 
 		this.serverSocket = sc;
 
-		System.out.println("Discovery node is hoasted at : " + this.discoveryNodeIP + "  " + " Listenning port : "
+		System.out.println(" Discovery node is hoasted at : " + this.discoveryNodeIP + "  " + " Listenning port : "
 				+ sc.getLocalPort());
 
 	}
@@ -134,35 +157,60 @@ public class DiscoveryNode implements Runnable {
 
 		System.out.println("Started Discovery node receiver thread;");
 		DataInputStream din = null;
-		DataOutputStream dout=null;
-		
+		DataOutputStream dout = null;
+
 		Socket socket;
+		
 		while (true) {
 
 			socket = serverSocket.accept();
+			
 			System.out.println("..: RegistrationRequest Socket acceepted :...");
-			
+
 			try {
-			
+
 				din = new DataInputStream(socket.getInputStream());
-				dout = new DataOutputStream(socket.getOutputStream());
 				
+				dout = new DataOutputStream(socket.getOutputStream());
+
 				// int number = din.readInt();
 				int requestIdentifierLength = din.readInt();
-				byte[] identifierBytes = new byte[requestIdentifierLength];
-				din.readFully(identifierBytes);
 				
+				byte[] identifierBytes = new byte[requestIdentifierLength];
+				
+				din.readFully(identifierBytes);
+
 				String strID = new String(identifierBytes);
 				int nodeID = 0;
+				int nodeListenningPort = 0;
 				
 				if (strID.equalsIgnoreCase(str_REG_REQUEST)) {
-					
+
 					nodeID = din.readInt();
+					
+					nodeListenningPort=din.readInt();
+					
 					System.out.println(strID);
+					
 					System.out.println(String.format("server has received the  number : %1$d ", nodeID));
 
-					boolean regSuccess = this.intiateRingNodeRegistration(nodeID);
+					InetAddress address = socket.getInetAddress();
 					
+					String strHOSTNAME= address.getLocalHost().getHostName();
+					System.out.println("Host of the ring :" + strHOSTNAME);
+					
+					
+					String strIP = address.getLocalHost().getHostAddress();
+					
+					boolean regSuccess = this.intiateRingNodeRegistration(nodeID,strIP,nodeListenningPort,strHOSTNAME);
+					
+					if(regSuccess)
+					{
+						RingNodes ring= this.ringNodes.get(nodeID);
+						
+						sendthePeerNodeHisPredessor();
+					}
+
 					System.out.println(strID);
 					int strResposnse = 0;
 
@@ -172,10 +220,9 @@ public class DiscoveryNode implements Runnable {
 						strResposnse = 222;
 					}
 
-					dout.writeInt(strResposnse);			
+					dout.writeInt(strResposnse);
 					dout.flush();
 
-				
 				}
 
 				System.out.println("done");
