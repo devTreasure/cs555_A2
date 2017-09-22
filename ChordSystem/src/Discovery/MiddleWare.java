@@ -2,6 +2,7 @@ package Discovery;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Iterator;
 
 import Management.predessorResponse;
 
@@ -24,13 +25,21 @@ public class MiddleWare {
 	}
 
 	public void sendThenewlyRegisterdNodePoredessorInfo(RingNodes ringNode) throws IOException {
+		
 		RingNodes ring=ringNode;
+		
 		Socket socket = new Socket(ring.ringNodeIP,ring.ringnodeServerSocketPORT);
-		new predessorResponse().response(socket,0);
+		
+		RingNodes predRing = getThepredessor(ringNode.ringNodeID);
+		
+		//Sending registered node it's predessor..Horray !!!
+		
+		new predessorResponse().response(socket,predRing.ringNodeID);
 
 	}
 
 	public RingNodes getThepredessor(int ringNodeID) {
+		
 		RingNodes Ring = null;
 		
 		if(discNode.ringNodes.size()==1)
@@ -43,15 +52,25 @@ public class MiddleWare {
 		   int findMinNodeID=0;
 		   
 		//  for (RingNodes r :  discNode.ringNodes) {
+		for( Integer key: discNode.ringNodes.keySet())
+		{
 			
-		}
-			
+			if(key<findMinNodeID)
+			{
+				findMinNodeID=key;
+			}
 		
+		}
+		   
+		
+			
+		Ring =discNode.ringNodes.get(findMinNodeID);
 		
 
 		
-		return Ring;
+		
 
 	}
+		return Ring;
 
 }
