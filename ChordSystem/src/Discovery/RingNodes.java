@@ -16,6 +16,9 @@ public class RingNodes {
 		result = prime * result + ringnodeServerSocketPORT;
 		return result;
 	}
+	
+	
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

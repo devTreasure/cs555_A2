@@ -10,8 +10,6 @@ import java.net.Socket;
 public class RegistrationRequest {
 
 
-
-
 	public void sendRegRequest(Socket socket,byte[] dataToSend,int nodeID, int nodeServerSocketPORT) throws IOException {
 
 

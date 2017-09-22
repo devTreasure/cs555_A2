@@ -6,13 +6,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,12 +21,35 @@ public class DiscoveryNode implements Runnable {
 	public String discoveryNodeName;
 	public ServerSocket serverSocket;
 	public Map<Integer,Discovery.RingNodes> ringNodes = null;
+	public MiddleWare objMiddleware;
+
+
 	public String str_REG_REQUEST = "REG_REQUEST";
 
 	public DiscoveryNode() {
 		
 		ringNodes = new HashMap<Integer,Discovery.RingNodes>();
+		
+		this.objMiddleware=new MiddleWare(this);
+		
 	}
+	
+	
+
+
+	public Map<Integer, Discovery.RingNodes> getRingNodes() {
+		return ringNodes;
+	}
+
+
+
+
+	public void setRingNodes(Map<Integer, Discovery.RingNodes> ringNodes) {
+		this.ringNodes = ringNodes;
+	}
+
+
+
 
 	public boolean intiateRingNodeRegistration(int nodeNum,String nodeIP,int nodeserverSocketPORT,String strhostName) {
 
@@ -67,14 +87,12 @@ public class DiscoveryNode implements Runnable {
 		return regSucess;
 	}
 
-	private void sendthePeerNodeHisPredessor() {
+	private void sendthePeerNodeHisPredessor(int nodeID) {
 
 		int intPredessorNode = -1;
 		int intSuccessorNode = -1;
 
-		if (this.ringNodes.size() == 0) {
-
-		}
+		this.objMiddleware.getThepredessor(nodeID);
 
 	}
 
@@ -96,11 +114,13 @@ public class DiscoveryNode implements Runnable {
 		discoveryNode.intializeDiscoverNode();
 
 		Thread t = new Thread(discoveryNode);
+		
 		t.start();
 
 		boolean continueOperations = true;
 
 		while (continueOperations) {
+			
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			
 			String exitStr = br.readLine();
@@ -197,6 +217,7 @@ public class DiscoveryNode implements Runnable {
 					InetAddress address = socket.getInetAddress();
 					
 					String strHOSTNAME= address.getLocalHost().getHostName();
+					
 					System.out.println("Host of the ring :" + strHOSTNAME);
 					
 					
@@ -206,9 +227,13 @@ public class DiscoveryNode implements Runnable {
 					
 					if(regSuccess)
 					{
-						RingNodes ring= this.ringNodes.get(nodeID);
 						
-						sendthePeerNodeHisPredessor();
+						
+					  RingNodes node = this.objMiddleware.getThepredessor(nodeID);
+					  
+					  this.objMiddleware.sendThenewlyRegisterdNodePoredessorInfo(node);
+					  
+					  
 					}
 
 					System.out.println(strID);
