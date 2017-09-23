@@ -25,52 +25,43 @@ public class MiddleWare {
 	}
 
 	public void sendThenewlyRegisterdNodePoredessorInfo(RingNodes ringNode) throws IOException {
-		
-		RingNodes ring=ringNode;
-		
-		Socket socket = new Socket(ring.ringNodeIP,ring.ringnodeServerSocketPORT);
-		
+
+		RingNodes ring = ringNode;
+
+		Socket socket = new Socket(ring.ringNodeIP, ring.ringnodeServerSocketPORT);
+
 		RingNodes predRing = getThepredessor(ringNode.ringNodeID);
-		
-		//Sending registered node it's predessor..Horray !!!
-		
-		new predessorResponse().response(socket,predRing.ringNodeID);
+
+		// Sending registered node it's predessor..Horray !!!
+
+		new predessorResponse().response(socket, predRing.ringNodeID);
 
 	}
 
 	public RingNodes getThepredessor(int ringNodeID) {
-		
+
 		RingNodes Ring = null;
-		
-		if(discNode.ringNodes.size()==1)
-		{
+
+		if (discNode.ringNodes.size() == 1) {
 			Ring = discNode.ringNodes.get(ringNodeID);
 
-		}
-		else
-		{
-		   int findMinNodeID=0;
-		   
-		//  for (RingNodes r :  discNode.ringNodes) {
-		for( Integer key: discNode.ringNodes.keySet())
-		{
-			
-			if(key<findMinNodeID)
-			{
-				findMinNodeID=key;
+		} else {
+			int findMinNodeID = 0;
+
+			// for (RingNodes r : discNode.ringNodes) {
+			for (Integer key : discNode.ringNodes.keySet()) {
+
+				if (key < findMinNodeID) {
+					findMinNodeID = key;
+				}
+
 			}
-		
+
+			Ring = discNode.ringNodes.get(findMinNodeID);
+
 		}
-		   
-		
-			
-		Ring =discNode.ringNodes.get(findMinNodeID);
-		
 
-		
-		
-
-	}
 		return Ring;
 
+	}
 }
