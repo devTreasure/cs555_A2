@@ -204,7 +204,8 @@ public class DiscoveryNode implements Runnable {
 				int nodeID = 0;
 				int nodeListenningPort = 0;
 				
-				if (strID.equalsIgnoreCase(str_REG_REQUEST)) {
+				if (strID.equalsIgnoreCase(str_REG_REQUEST)) 
+				{
 
 					nodeID = din.readInt();
 					
@@ -248,6 +249,10 @@ public class DiscoveryNode implements Runnable {
 					dout.writeInt(strResposnse);
 					dout.flush();
 
+				}
+				
+				if(strID.equalsIgnoreCase("successor")) {
+					
 				}
 
 				System.out.println("done");

@@ -8,6 +8,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Hashtable;
+
 import Management.*;
 
 public class Node implements Runnable {
@@ -24,6 +26,9 @@ public class Node implements Runnable {
 	public boolean isRegisterd = false;
 	public ServerSocket serversocket;
 	public boolean isNodeAlive = false;
+	public int fingertableSize = 3;
+	public double nodeID;
+	public Hashtable<Integer, Integer> hashtable = new Hashtable<Integer, Integer>();
 
 	public Node() {
 
@@ -31,6 +36,40 @@ public class Node implements Runnable {
 
 	public void intiateNode() {
 		System.out.println("Peer Node has been started");
+	}
+
+	public void findSuccessor() {
+
+	}
+
+	public void findTheSuccessor(double succssorNODE)
+	{
+		
+		Socket socket = new Socket(this.discoveryIP, this.discoveryPORT);
+		String str_successor="successor";
+		byte[] dataToSend=str_successor.getBytes();
+		
+		int id = new successorNodeRequest().sendSuccesorRequest(socket, dataToSend, succssorNODE);
+		
+	}
+	private void resolveIDtoIP() {
+		
+		// TODO Auto-generated method stub
+		//if it resolves to fail then it;s not available as your successor
+		
+	}
+
+	public void buildfingerTable() {
+		
+		//Use it in thread
+		
+		for (int i = 1; i <= this.fingertableSize; i++) {
+			// hashtable.put(i, arg1)
+			double succssorNODE =  this.nodeID + Math.pow(2,(i-1));
+			this.findTheSuccessor(succssorNODE);
+			
+		}
+
 	}
 
 	@Override
@@ -85,7 +124,7 @@ public class Node implements Runnable {
 			System.out.println(strIPandPort.length);
 
 			if (strIPandPort.length == 2) {
-				
+
 				System.out.println("IP and port value recieved and sending REGISTRATON message");
 
 				node = new Node();
@@ -105,15 +144,12 @@ public class Node implements Runnable {
 
 			}
 
-			if (EXIT_COMMAND.equalsIgnoreCase(exitStr)) 
-			{
+			if (EXIT_COMMAND.equalsIgnoreCase(exitStr)) {
 				System.out.println("Exiting.");
-				
+
 				continueOperations = false;
-				
-			}
-			else if ("start".equalsIgnoreCase(exitStr)) 
-			{
+
+			} else if ("start".equalsIgnoreCase(exitStr)) {
 
 				boolean regSuccess = false;
 
