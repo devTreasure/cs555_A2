@@ -6,7 +6,7 @@ import java.net.Socket;
 
 public class successorNodeRequest {
 
-	public void sendSuccesorRequest(Socket socket,byte[] dataToSend,double nodeID) throws IOException {
+	public void sendSuccesorRequest(Socket socket,byte[] dataToSend) throws IOException {
 
 
 	  DataOutputStream dout = null;
@@ -24,9 +24,9 @@ public class successorNodeRequest {
 			dout.write(dataToSend, 0, dataLength);
 			
 			//node ID
-			int node =(int)nodeID;
+			//int node =(int)nodeID;
 			
-			dout.writeInt(node);		
+			//dout.writeInt(node);		
 			
 			dout.flush();
 			

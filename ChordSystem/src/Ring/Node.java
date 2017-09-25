@@ -22,13 +22,17 @@ public class Node implements Runnable {
 	public String discoveryIP;
 	public int discoveryPORT;
 	public Socket socket;
-	public String str_REG_REQUEST = "REG_REQUEST";
+	public String str_REG_REQUEST =   "REG_REQUEST";
+	public String str_SUCC_REQUEST =  "SUCC_REQUEST";
+	public String str_SUCC_RESPONSE = "SUCC_RESPONSE";
+	public static String str_RANDOM_REQUEST = "RANDOM_NODE_REQUEST";
 	public boolean isRegisterd = false;
 	public ServerSocket serversocket;
 	public boolean isNodeAlive = false;
 	public int fingertableSize = 3;
-	public double nodeID;
+	public int nodeID;
 	public Hashtable<Integer, Integer> hashtable = new Hashtable<Integer, Integer>();
+	public successorNodeWorker successorWorker;
 
 	public Node() {
 
@@ -38,18 +42,20 @@ public class Node implements Runnable {
 		System.out.println("Peer Node has been started");
 	}
 
-	public void findSuccessor() {
+	
 
-	}
-
-	public void findTheSuccessor(double succssorNODE)
+	public void findTheSuccessor(int succssorNODE) throws IOException
 	{
 		
+		/*
 		Socket socket = new Socket(this.discoveryIP, this.discoveryPORT);
-		String str_successor="successor";
+		
+		String str_successor=str_SUCC_REQUEST;
+		
 		byte[] dataToSend=str_successor.getBytes();
 		
-		int id = new successorNodeRequest().sendSuccesorRequest(socket, dataToSend, succssorNODE);
+		new successorNodeRequest().sendSuccesorRequest(socket, dataToSend);
+		*/
 		
 	}
 	private void resolveIDtoIP() {
@@ -59,14 +65,18 @@ public class Node implements Runnable {
 		
 	}
 
-	public void buildfingerTable() {
+	public void buildfingerTable() throws IOException {
 		
 		//Use it in thread
 		
 		for (int i = 1; i <= this.fingertableSize; i++) {
 			// hashtable.put(i, arg1)
+			
 			double succssorNODE =  this.nodeID + Math.pow(2,(i-1));
-			this.findTheSuccessor(succssorNODE);
+			
+			//this.findTheSuccessor(succssorNODE);
+		
+			//new successorNodeRequest().sendrandomNodeIDfromDiscovery(socket, dataToSend, successorID);
 			
 		}
 
@@ -78,9 +88,13 @@ public class Node implements Runnable {
 		while (true) {
 
 			try {
+				
 
-				int predessorid = new predessorRequest().processRequestOnserver(this.serversocket);
-				System.out.println("Serve sent the Predessor id for this node " + predessorid);
+				int randomNode = new randomNodeserverSocket().serverWaitAndAccept(this.serversocket);
+				System.out.println("Serve sent the Random Node id for this node " + randomNode);
+				
+				
+		
 			}
 
 			catch (IOException e) {
@@ -141,7 +155,18 @@ public class Node implements Runnable {
 
 				Thread t = new Thread(node);
 				t.start();
-
+				
+				//This thread for the SUCCESSOR
+				
+				//successorNodeWorker  successorWORKER= new successorNodeWorker(node);
+			
+				///node.successorWorker=successorWORKER;
+				
+				//Thread t2 = new Thread(successorWORKER);
+				//t2.run();
+				
+				
+				
 			}
 
 			if (EXIT_COMMAND.equalsIgnoreCase(exitStr)) {
@@ -165,8 +190,7 @@ public class Node implements Runnable {
 
 					byte[] regrequest = node.str_REG_REQUEST.getBytes();
 
-					new RegistrationRequest().sendRegRequest(socket, regrequest, Integer.parseInt(nodeID),
-							node.serversocket.getLocalPort());
+					new RegistrationRequest().sendRegRequest(socket, regrequest, Integer.parseInt(nodeID),node.serversocket.getLocalPort());
 
 					DataInputStream dinn = new DataInputStream(socket.getInputStream());
 
@@ -177,6 +201,9 @@ public class Node implements Runnable {
 					if (resp == 111) {
 						node.isRegisterd = true;
 						// node.socket.close();
+						
+						node.nodeID = Integer.parseInt(nodeID);
+								
 
 						node.updateFingerTable();
 					}
@@ -186,8 +213,15 @@ public class Node implements Runnable {
 
 				if (node.isRegisterd) {
 
-					System.out.println("Node is registerd with the Server");
+					System.out.println("Node is registerd with the Server znd ID is" + node.nodeID );
+					
 					System.out.println("Node listenning on the port: " + node.serversocket.getLocalPort());
+
+					Socket socket = new Socket(node.discoveryIP, node.discoveryPORT);
+					
+				
+					new RandomNodeRequest().randomRequest(socket, str_RANDOM_REQUEST.getBytes() ,  node.nodeID);
+					
 				}
 
 			} else if ("pull-traffic-summary".equalsIgnoreCase(exitStr)) {
@@ -199,9 +233,13 @@ public class Node implements Runnable {
 
 	}
 
-	public void updateFingerTable() {
+	public void updateFingerTable() throws IOException {
 
 		// logic node id + 2 *(i)-1
+	
+		//this.findTheSuccessor(this.nodeID);
+		
+		this.findTheSuccessor(this.nodeID);
 
 	}
 

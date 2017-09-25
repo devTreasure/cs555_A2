@@ -12,6 +12,11 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+
+import Management.randomNodeResponse;
+import Management.successorNodeResponse;
+import Management.successorNodeResponse_one;
 
 public class DiscoveryNode implements Runnable {
 
@@ -22,7 +27,9 @@ public class DiscoveryNode implements Runnable {
 	public ServerSocket serverSocket;
 	public Map<Integer,Discovery.RingNodes> ringNodes = null;
 	public MiddleWare objMiddleware;
-
+	public String str_SUCC_REQUEST = "SUCC_REQUEST";
+	public String str_RANDOM_REQUEST = "RANDOM_NODE_REQUEST";
+	public String str_RANDOM_RESPONSE= "RANDOM_NODE_RESPONSE";
 
 	public String str_REG_REQUEST = "REG_REQUEST";
 
@@ -31,6 +38,42 @@ public class DiscoveryNode implements Runnable {
 		ringNodes = new HashMap<Integer,Discovery.RingNodes>();
 		
 		this.objMiddleware=new MiddleWare(this);
+		
+	}
+	
+	public int  getTheRandomNode(int node)
+	{
+		
+		RingNodes randomNode=null;
+		
+		try
+		{
+			
+		Random rand = new Random();
+		
+		int maxlength= this.ringNodes.size();
+		
+		System.out.println("getTheRandomNode");
+	
+	
+		int x = rand.nextInt(maxlength);
+		
+	
+		
+		System.out.println(x);
+		
+		
+		randomNode =(RingNodes) this.ringNodes.values().toArray()[x];
+		
+		System.out.println(randomNode.ringNodeID);
+		
+		}
+		catch(Exception ex)
+		{
+			System.out.println(ex.getMessage());
+		}
+		
+		return randomNode.ringNodeID;
 		
 	}
 	
@@ -185,7 +228,7 @@ public class DiscoveryNode implements Runnable {
 
 			socket = serverSocket.accept();
 			
-			System.out.println("..: RegistrationRequest Socket acceepted :...");
+			System.out.println("..: Registration-Request Socket acceepted :...");
 
 			try {
 
@@ -201,7 +244,9 @@ public class DiscoveryNode implements Runnable {
 				din.readFully(identifierBytes);
 
 				String strID = new String(identifierBytes);
+				
 				int nodeID = 0;
+				
 				int nodeListenningPort = 0;
 				
 				if (strID.equalsIgnoreCase(str_REG_REQUEST)) 
@@ -251,11 +296,44 @@ public class DiscoveryNode implements Runnable {
 
 				}
 				
-				if(strID.equalsIgnoreCase("successor")) {
+				if(strID.equalsIgnoreCase(str_RANDOM_REQUEST))
+				{
+					
+					System.out.println("Inside Random Request");
+					
+					int newnodeID=din.readInt();
+					
+					System.out.println("Peer sent the id " + newnodeID );
+					
+					RingNodes ring = this.ringNodes.get(newnodeID);
+					
+										
+					int randomNode=this.getTheRandomNode(newnodeID);
+					
+					Socket socket2 = new Socket(ring.ringNodeIP, ring.ringnodeServerSocketPORT);
+					
+					new  randomNodeResponse().response(socket2, randomNode);
+					
+							
+				}
+				
+				/*
+				if(strID.equalsIgnoreCase(str_SUCC_REQUEST)) {
+					
+					System.out.println("Server has received  successor request");
+					
+					System.out.println(socket.getLocalPort());
+							
+					int reandomNodeID= this.getTheRandomNode();
+					
+					System.out.println("Random node id is : "  + reandomNodeID);
+					
+					//new successorNodeResponse_one().response(socket, reandomNodeID);
 					
 				}
 
 				System.out.println("done");
+				*/
 
 			}
 

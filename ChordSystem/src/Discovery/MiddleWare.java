@@ -20,9 +20,15 @@ public class MiddleWare {
 
 	}
 
+	public int getTheRanomNode() {
+		
+		return 0;
+	}
+
 	public void successorNode() {
 
 	}
+	
 
 	public void sendThenewlyRegisterdNodePoredessorInfo(RingNodes ringNode) throws IOException {
 
