@@ -31,8 +31,9 @@ public class Node implements Runnable {
 	public boolean isNodeAlive = false;
 	public int fingertableSize = 3;
 	public int nodeID;
-	public Hashtable<Integer, Integer> hashtable = new Hashtable<Integer, Integer>();
+	public Hashtable<Double, Integer> hashtable = new Hashtable<Double, Integer>();
 	public successorNodeWorker successorWorker;
+	public int randomNode=0;
 
 	public Node() {
 
@@ -74,6 +75,7 @@ public class Node implements Runnable {
 			
 			double succssorNODE =  this.nodeID + Math.pow(2,(i-1));
 			
+			
 			//this.findTheSuccessor(succssorNODE);
 		
 			//new successorNodeRequest().sendrandomNodeIDfromDiscovery(socket, dataToSend, successorID);
@@ -89,11 +91,12 @@ public class Node implements Runnable {
 
 			try {
 				
-
+				//This is blocking call
+				
 				int randomNode = new randomNodeserverSocket().serverWaitAndAccept(this.serversocket);
 				System.out.println("Serve sent the Random Node id for this node " + randomNode);
 				
-				
+				this.randomNode = randomNode;
 		
 			}
 
@@ -222,6 +225,9 @@ public class Node implements Runnable {
 				
 					new RandomNodeRequest().randomRequest(socket, str_RANDOM_REQUEST.getBytes() ,  node.nodeID);
 					
+					
+					node.updateFingerTable();
+					
 				}
 
 			} else if ("pull-traffic-summary".equalsIgnoreCase(exitStr)) {
@@ -238,9 +244,24 @@ public class Node implements Runnable {
 		// logic node id + 2 *(i)-1
 	
 		//this.findTheSuccessor(this.nodeID);
+		if(this.nodeID==this.randomNode)
+		{
+			
+			for (int i = 1; i <= this.fingertableSize; i++) {
+				// hashtable.put(i, arg1)
+				
+				//double succssorNODE =  this.nodeID + Math.pow(2,(i-1));
+				this.hashtable.put(Math.pow(2,(i-1)), this.nodeID);
+			}
 		
-		this.findTheSuccessor(this.nodeID);
-
+			
+		}
+		else
+		{
+			
+		}
+		
+		
 	}
 
 }
