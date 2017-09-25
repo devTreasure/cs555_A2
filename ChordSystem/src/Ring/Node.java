@@ -246,19 +246,21 @@ public class Node implements Runnable {
 		//this.findTheSuccessor(this.nodeID);
 		if(this.nodeID==this.randomNode)
 		{
+		
+			this.predecessorNode=this;
 			
 			for (int i = 1; i <= this.fingertableSize; i++) {
 				// hashtable.put(i, arg1)
-				
-				//double succssorNODE =  this.nodeID + Math.pow(2,(i-1));
+	
+			//double succssorNODE =  this.nodeID + Math.pow(2,(i-1));
 				this.hashtable.put(Math.pow(2,(i-1)), this.nodeID);
 			}
-		
 			
 		}
-		else
+		
+		if(this.nodeID >this.randomNode)
 		{
-			
+			//we will have to set the trigger
 		}
 		
 		
