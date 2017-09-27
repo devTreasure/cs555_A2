@@ -28,10 +28,10 @@ public class MiddleWare {
 	public void successorNode() {
 
 	}
-	
 
 	public void sendThenewlyRegisterdNodePoredessorInfo(RingNodes ringNode) throws IOException {
 
+		 
 		RingNodes ring = ringNode;
 
 		Socket socket = new Socket(ring.ringNodeIP, ring.ringnodeServerSocketPORT);

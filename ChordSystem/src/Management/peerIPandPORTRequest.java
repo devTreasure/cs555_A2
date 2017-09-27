@@ -4,9 +4,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class RandomNodeRequest {
-
-	public void randomRequest(Socket socket, byte[] dataToSend, int nodeID)
+public class peerIPandPORTRequest {
+	
+	public void peer_IP_PORT_Request(Socket socket, byte[] dataToSend, int nodeID)
 			throws IOException {
 
 		DataOutputStream dout = null;
@@ -35,13 +35,14 @@ public class RandomNodeRequest {
 			e.printStackTrace();
 		} finally {
 			if (dout != null) {
-				 dout.close();
+				// dout.close();
 
-				 //dont close socket as you are awaiting response from server
+				// dont close socket as you are awaiting response from server
 
-				 socket.close();
+				// socket.close();
 			}
 
 		}
 	}
+
 }

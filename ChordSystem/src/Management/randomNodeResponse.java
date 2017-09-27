@@ -6,16 +6,41 @@ import java.net.Socket;
 
 public class randomNodeResponse {
 	
-	public void  response(Socket socket, int responseRandomNodeValue) throws IOException
+	public void  response(Socket socket,byte[] dataToSend, int responseRandomNodeValue,byte[] nodeIP,int nodePORT) throws IOException
 	{
 		DataOutputStream dout = null;
-		Socket sc=null;
+		Socket socket1=null;
 		try {
 			
 			
-			sc= socket;
-			dout = new DataOutputStream(sc.getOutputStream());					
+			socket1= socket;
+			
+			dout = new DataOutputStream(socket1.getOutputStream());	
+									
+			int dataLength = dataToSend.length;
+			
+			dout.writeInt(dataLength);
+			
+			//RESPONSE_TYPE_NAME
+			dout.write(dataToSend, 0, dataLength);
+			
+			//random node ID
 			dout.writeInt(responseRandomNodeValue);
+			
+			//			
+			int nodeIPLength = nodeIP.length;
+			
+			//length of IP
+			dout.writeInt(nodeIPLength);
+			
+			//NODE_ID_
+			dout.write(nodeIP, 0, nodeIPLength);
+
+			//NodePORT
+			dout.writeInt(nodePORT);
+			
+			
+			
 			dout.flush();
 			
 			
@@ -24,7 +49,7 @@ public class randomNodeResponse {
 		} finally {
 			if (dout != null)
 				dout.close();
-		     	sc.close();
+			    socket1.close();
 		}
 	}
 

@@ -6,18 +6,18 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class randomNodeserverSocket {
+public class peerNodeServerSocket {
 
 	ServerSocket serverSocket = null;
 
-	public int  serverWaitAndAccept(ServerSocket serversocket) throws IOException
+	public int serverWaitAndAccept(ServerSocket serversocket) throws IOException
 
 	{
 		Socket socket = null;
 		
 		int nodeID = 0;
 		
-		System.out.println("Waiting for the Request for the Peer Node ID ");
+		System.out.println("Waiting  in time for all the  Request being sent down by the Discovery ");
 		
 		DataInputStream din = null;
 		

@@ -14,7 +14,8 @@ public class predessorResponse {
 			
 			
 			sc= socket;
-			dout = new DataOutputStream(sc.getOutputStream());					
+			dout = new DataOutputStream(sc.getOutputStream());				
+			
 			dout.writeInt(responseValue);
 			dout.flush();
 			

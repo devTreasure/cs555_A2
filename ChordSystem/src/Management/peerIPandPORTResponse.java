@@ -4,9 +4,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class RandomNodeRequest {
+public class peerIPandPORTResponse {
 
-	public void randomRequest(Socket socket, byte[] dataToSend, int nodeID)
+	
+	
+	public void peer_IP_PORT_Response(Socket socket, byte[] dataToSend, byte[] strIP, int port)
 			throws IOException {
 
 		DataOutputStream dout = null;
@@ -20,13 +22,19 @@ public class RandomNodeRequest {
 
 			dout.writeInt(dataLength);
 
-			// REQUEST_NAME
+			// RESPONSE NAME
 			dout.write(dataToSend, 0, dataLength);
-
-			// node ID
-			System.out.println("Peer is writng down the node ID " + nodeID);
 			
-			dout.writeInt(nodeID);
+			
+			//IP String 
+			dout.writeInt(strIP.length);
+			
+			dout.write(strIP, 0, strIP.length);
+
+			
+			//PORT
+			dout.writeInt(port);
+	
 
 		
 			dout.flush();
@@ -35,11 +43,11 @@ public class RandomNodeRequest {
 			e.printStackTrace();
 		} finally {
 			if (dout != null) {
-				 dout.close();
+				// dout.close();
 
-				 //dont close socket as you are awaiting response from server
+				// dont close socket as you are awaiting response from server
 
-				 socket.close();
+				// socket.close();
 			}
 
 		}

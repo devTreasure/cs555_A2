@@ -4,9 +4,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class RandomNodeRequest {
+public class peerPredecessorRequest {
 
-	public void randomRequest(Socket socket, byte[] dataToSend, int nodeID)
+	
+	public void request(Socket socket, byte[] dataToSend )
 			throws IOException {
 
 		DataOutputStream dout = null;
@@ -22,23 +23,16 @@ public class RandomNodeRequest {
 
 			// REQUEST_NAME
 			dout.write(dataToSend, 0, dataLength);
-
-			// node ID
-			System.out.println("Peer is writng down the node ID " + nodeID);
-			
-			dout.writeInt(nodeID);
-
-		
+				
 			dout.flush();
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			if (dout != null) {
+				
 				 dout.close();
-
-				 //dont close socket as you are awaiting response from server
-
+			   // dont close socket as you are awaiting response from server
 				 socket.close();
 			}
 
