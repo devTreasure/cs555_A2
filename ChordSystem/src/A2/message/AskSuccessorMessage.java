@@ -6,21 +6,32 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class NodeDetails implements Command {
-   public static final String cmd = "CMD_NodeDetails";
+public class AskSuccessorMessage implements Command {
 
+   public static final String cmd = "CMD_AskSuccessorMessage";
+   
    public String ipAddress;
    public int port;
    public int id;
    public boolean hasData;
    public String message = "";
 
-   public NodeDetails() {}
+   public AskSuccessorMessage() {}
 
-   public NodeDetails(String ipAddress, int port, int id, boolean hasData, String message) {
+   public AskSuccessorMessage(String ipAddress, int port, int id, boolean hasData, String message) {
       this.ipAddress = ipAddress;
       this.port = port;
       this.id = id;
+      this.hasData = hasData;
+      this.message = message;
+   }
+   
+   public AskSuccessorMessage(String ipAddress, int port, int id) {
+      this.ipAddress = ipAddress;
+      this.port = port;
+      this.id = id;
+      this.hasData = true;
+      this.message = "";
    }
 
    @Override
@@ -78,8 +89,8 @@ public class NodeDetails implements Command {
 
    @Override
    public String toString() {
-      return "NodeDetails [ipAddress=" + ipAddress + ", port=" + port + ", id=" + id + ", hasData="
-            + hasData + ", message=" + message + "]";
-   }   
+      return "AskSuccessorMessage [ipAddress=" + ipAddress + ", port=" + port + ", id=" + id
+            + ", hasData=" + hasData + ", message=" + message + "]";
+   }
 
 }

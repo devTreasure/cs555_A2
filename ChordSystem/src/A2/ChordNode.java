@@ -5,14 +5,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 
+import A2.message.AskSuccessorMessage;
 import A2.message.Command;
 import A2.message.NodeDetails;
+import A2.message.RegisterReponse;
 import A2.message.RegistgerCommand;
+import A2.message.ReturnRandomNodeCommand;
 
 public class ChordNode implements Node {
 
+   public static final int SYSTEM_SIZE_IN_BITS = 3; 
+   
    private String discoveryIP;
    private int discoveryPORT;
 
@@ -20,11 +26,11 @@ public class ChordNode implements Node {
    private int nodePort;
    private String nodeName;
    private int nodeId;
-
+   
    private TCPSender tcpSender = new TCPSender();
 
 
-   private Hashtable<Integer, Integer> fingerTable = new Hashtable<>();
+   private List<Integer> fingerTable = new ArrayList();
 
    private ReceiverWorker receiverWorker;
    private Thread receiverWorkerThread;
@@ -56,9 +62,9 @@ public class ChordNode implements Node {
       node.nodeId = nodeId;
       node.intializeServerNode();
       node.registerWithDiscoveryNode();
-      node.insertIntoChord();
-      node.buildFingerTable();
-      node.tarnsferData();
+//      node.insertIntoChord();
+//      node.buildFingerTable();
+//      node.tarnsferData();
 
       // ---------------
       int k = 0;
@@ -75,7 +81,7 @@ public class ChordNode implements Node {
 
          if ("exit".equalsIgnoreCase(exitStr)) {
             System.out.println("Exiting.");
-            node.receiverWorkerThread.stop();
+            node.receiverWorker.continueFlag = false;
             continueOperations = false;
          }
       }
@@ -89,8 +95,9 @@ public class ChordNode implements Node {
 
    }
 
-   private void resolveTragetNode(int k) {
-
+   private NodeDetails resolveTragetNode(int k) {
+      
+      return null;
    }
 
    private void tarnsferData() {
@@ -103,10 +110,10 @@ public class ChordNode implements Node {
 
    }
 
-   public NodeDetails findCuccessor(NodeDetails randomNode) {
-      // 2. Ask for your successor
-      AskSuccessorMessage asm = new AskSuccessorMessage(nodeId, randomNode);
-      NodeDetails nodeDetail = asm.send();
+   public NodeDetails findSuccessor(NodeDetails fromNode) {
+      // 3. Ask for your successor
+      AskSuccessorMessage asm = new AskSuccessorMessage(nodeIP, nodePort, nodeId);
+      Command nodeDetail = tcpSender.sendAndReceiveData(fromNode.ipAddress, fromNode.port, asm.unpack());
 
       // 2.x Check very first node condition. Successor will be same as random node.
 
@@ -116,18 +123,25 @@ public class ChordNode implements Node {
 
       // 3. Ask succcessor's predecessor Lets say X
 
-      return nodeDetail;
+      return null;
 
    }
 
-   private void insertIntoChord() {
+   private void insertIntoChord() throws Exception {
 
-      // 1. Ask discovery to return you a random node. (Send your id so that discovery returns you
-      // other node).
-      DiscoveryNodeUtil discoveryNodeUtil = new DiscoveryNodeUtil(discoveryIP, discoveryPORT);
-      NodeDetails randomNode = discoveryNodeUtil.askRandomNode(nodeId);
-
-      NodeDetails successor = findCuccessor(randomNode);
+      // 1. Ask discovery to return you a random node. (Send your id so that discovery returns you other node).
+      ReturnRandomNodeCommand randomNodeRequest = new ReturnRandomNodeCommand(nodeIP, nodePort, nodeId);
+      NodeDetails randomNode = (NodeDetails) tcpSender.sendAndReceiveData(discoveryIP, discoveryPORT, randomNodeRequest.unpack());
+      System.out.println(randomNode);
+      
+      // 2. Check very first node condition. Successor will be same as random node.
+      if(randomNode.id == nodeId) {
+         buildInitialFingerTable();
+      } else {
+         NodeDetails successor = findSuccessor(randomNode);
+         
+      }
+      
 
       // 4. Insert your self (lets say Y) as PRED of succ.
       // Pred(Z) was X now Pred(Z) will be this node Y
@@ -138,13 +152,24 @@ public class ChordNode implements Node {
       // Also TRANSFER data which is <= y(id) from Z to Y(this node).
    }
 
-
+   private void buildInitialFingerTable() {
+      for(int i=1; i<=SYSTEM_SIZE_IN_BITS;i++) {
+//         double succOf = nodeId + Math.pow(2, (i-1));
+         fingerTable.add(nodeId);
+      }
+      
+   }
 
    private void registerWithDiscoveryNode() throws Exception {
       System.out.println("Registering with discovery node.");
       RegistgerCommand command = new RegistgerCommand(nodeIP, nodePort, nodeId);
-      tcpSender.sendData(discoveryIP, discoveryPORT, command.unpack());
-      // Discovery will do Id Collision check and then return TRUE/FALSE as response
+      Command resp = tcpSender.sendAndReceiveData(discoveryIP, discoveryPORT, command.unpack());
+      System.out.println(resp);
+      
+      RegisterReponse response = (RegisterReponse) resp;
+      if(!response.isSuccess()) {
+         throw new RuntimeException("Node Id already exist. Please use another id");
+      }
    }
 
    // private void sendStatistics() throws Exception {
@@ -241,8 +266,13 @@ public class ChordNode implements Node {
    }
 
    @Override
-   public void notify(Command command) {
+   public Command notify(Command command) {
+      if(command instanceof AskSuccessorMessage) {
+         AskSuccessorMessage asm = (AskSuccessorMessage) command;
+         NodeDetails node = resolveTragetNode(asm.id);
+      }
       System.out.println("Received command >> " + command);
+      return new NodeDetails("", -1, -1, true, "Nothing");
    }
 
 }

@@ -26,7 +26,21 @@ public class CommandFactory {
                   RegisterReponse registerReponse = new RegisterReponse();
                   registerReponse.pack(din);
                   cmd = registerReponse;
-             } else {
+             } else if(ReturnRandomNodeCommand.cmd.equals(str_request_type)) {
+                ReturnRandomNodeCommand command = new ReturnRandomNodeCommand();
+                command.pack(din);
+                cmd = command;
+             } else if (NodeDetails.cmd.equals(str_request_type)) {
+                NodeDetails command = new NodeDetails();
+                command.pack(din);
+                cmd = command;
+             } else if(AskSuccessorMessage.cmd.equals(str_request_type)) {
+                AskSuccessorMessage command = new AskSuccessorMessage();
+                command.pack(din);
+                cmd = command;
+             }
+             
+             else {
                 System.out.println("ERROR: UNKNOWN COMMAND. " + str_request_type);
              }
              

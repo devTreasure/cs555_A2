@@ -69,4 +69,12 @@ public class RegisterReponse implements Command {
       return "RegisterReponse [success=" + success + ", message=" + message + "]";
    }
 
+   public boolean isSuccess() {
+      return success;
+   }
+
+   public String getMessage() {
+      return message;
+   }
+   
 }

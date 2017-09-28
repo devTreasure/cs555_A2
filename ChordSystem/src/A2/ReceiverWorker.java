@@ -11,7 +11,8 @@ public class ReceiverWorker implements Runnable {
 
    private ServerSocket serverSocket;
    private Node node;
-   private boolean continueFlag = true;
+   public boolean continueFlag = true;
+   private TCPSender tcpSender = new TCPSender();
 
    public ReceiverWorker(ServerSocket sc, Node node) {
       this.serverSocket = sc;
@@ -24,12 +25,21 @@ public class ReceiverWorker implements Runnable {
 
       while (continueFlag) {
          Socket socket = null;
-         Command message = null;
+         Command request = null;
          try {
             socket = serverSocket.accept();
             
             //Get the message
-            message = CommandFactory.process(socket);
+            request = CommandFactory.process(socket);
+            
+            try {
+               Command response = node.notify(request);
+               tcpSender.sendData(socket, response.unpack());
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+            
+            
          } catch (Exception e) {
             e.printStackTrace();
          } finally {
@@ -44,11 +54,11 @@ public class ReceiverWorker implements Runnable {
          }
          
          //Notify the Node with received command
-         try {
-            node.notify(message);
-         } catch (Exception e) {
-            e.printStackTrace();
-         }
+//         try {
+//            node.notify(message);
+//         } catch (Exception e) {
+//            e.printStackTrace();
+//         }
       }
    }
 

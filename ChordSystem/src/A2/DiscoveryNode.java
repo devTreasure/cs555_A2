@@ -5,11 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Random;
-
-import javax.print.attribute.standard.ReferenceUriSchemesSupported;
 
 import A2.message.Command;
 import A2.message.NodeDetails;
@@ -92,20 +89,21 @@ public class DiscoveryNode implements Node {
    }
 
    @Override
-   public void notify(Command command) throws Exception {
+   public Command notify(Command command) throws Exception {
       System.out.println("Received command >> " + command);
       if(command instanceof RegistgerCommand) {
          // 1. Register request (Check for id collision)
-         registerNode((RegistgerCommand) command);
+         return registerNode((RegistgerCommand) command);
       } else if(command instanceof ReturnRandomNodeCommand) {
          // 2. Give me random node to resolve the successor
-         randomStaringNode((ReturnRandomNodeCommand) command);
+         return randomStaringNode((ReturnRandomNodeCommand) command);
       }
+      return null;
    }
 
-   private void randomStaringNode(ReturnRandomNodeCommand command) throws Exception {
+   private Command randomStaringNode(ReturnRandomNodeCommand command) throws Exception {
       
-      NodeDetails response;
+      NodeDetails response = null;
       int size = registry.size();
       if(size == 0) {
          response = new NodeDetails("", -1, -1, false, "No registerd nodes.");
@@ -121,11 +119,12 @@ public class DiscoveryNode implements Node {
             }
          }
       }
+      
       System.out.println("Random Node:" + response);
-      sender.sendData(command.ipAddress, command.port, response.unpack());
+      return response;
    }
 
-   private void registerNode(RegistgerCommand command) throws Exception {
+   private Command registerNode(RegistgerCommand command) throws Exception {
       RegisterReponse response = null;
       if(command==null) {
          response = new RegisterReponse(false, "Invalid command");  
@@ -136,7 +135,7 @@ public class DiscoveryNode implements Node {
          response = new RegisterReponse(true, "Registered.");
       }
       System.out.println("Response is:" + response);
-      sender.sendData(command.ipAddress, command.port, response.unpack());;
+      return response;
    }
 
 }
