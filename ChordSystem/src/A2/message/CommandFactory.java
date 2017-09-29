@@ -16,7 +16,7 @@ public class CommandFactory {
              byte[] request_Type = new byte[request_Typelength];
              din.readFully(request_Type);
              String str_request_type = new String(request_Type);
-             System.out.println(str_request_type);
+//             System.out.println(str_request_type);
 
              if (RegistgerCommand.cmd.equals(str_request_type)) {
                   RegistgerCommand registgerCommand = new RegistgerCommand();
@@ -50,7 +50,12 @@ public class CommandFactory {
                 GetSuccessor command = new GetSuccessor();
                 command.pack(din);
                 cmd = command;
-             } else {
+             } else if(UpdateFingerTable.cmd.equals(str_request_type)) {
+                UpdateFingerTable command = new UpdateFingerTable();
+                command.pack(din);
+                cmd = command;
+             }
+             else {
                 System.out.println("ERROR: UNKNOWN COMMAND. " + str_request_type);
              }
              
@@ -64,7 +69,7 @@ public class CommandFactory {
 //         }
       }
 
-        System.out.println("Created:" + cmd);
+//        System.out.println("Created:" + cmd);
         return cmd;
         
      }

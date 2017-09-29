@@ -6,14 +6,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class GetSuccessor implements Command {
+public class UpdateFingerTable implements Command {
 
-   public static final String cmd = "CMD_GetSuccessor";
-   
-   @Override
-   public void pack(DataInputStream din) {
-
-   }
+   public static final String cmd = "CMD_UpdateFingerTable";
 
    @Override
    public byte[] unpack() {
@@ -42,8 +37,12 @@ public class GetSuccessor implements Command {
    }
 
    @Override
+   public void pack(DataInputStream din) {
+   }
+
+   @Override
    public String toString() {
-      return "GetSuccessor []";
+      return "UpdateFingerTable []";
    }
 
 }

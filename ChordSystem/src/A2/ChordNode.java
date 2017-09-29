@@ -19,11 +19,12 @@ import A2.message.Response;
 import A2.message.ReturnRandomNodeCommand;
 import A2.message.SetMeAsPredecessor;
 import A2.message.SetMeAsSuccessor;
+import A2.message.UpdateFingerTable;
 
 public class ChordNode implements Node {
 
-   public static final int SYSTEM_SIZE_IN_BITS = 3; 
-   
+   public static final int SYSTEM_SIZE_IN_BITS = 3;
+
    private String discoveryIP;
    private int discoveryPORT;
 
@@ -31,7 +32,7 @@ public class ChordNode implements Node {
    private int nodePort;
    private String nodeName;
    private int nodeId;
-   
+
    private TCPSender tcpSender = new TCPSender();
 
    private List<Integer> fingerTable = new ArrayList();
@@ -39,7 +40,7 @@ public class ChordNode implements Node {
 
    private ReceiverWorker receiverWorker;
    private Thread receiverWorkerThread;
-   
+
    private NodeDetails successor;
    private NodeDetails predecessor;
 
@@ -74,7 +75,10 @@ public class ChordNode implements Node {
       node.registerWithDiscoveryNode();
       node.insertIntoChord();
       node.buildFingerTable();
-//      node.tarnsferData();
+      node.askSuccessorTOUpdateFingerTable();
+      //may inform successor/predecessor to update it's finger table      
+      
+      // node.tarnsferData();
 
       // ---------------
       int k = 0;
@@ -92,9 +96,9 @@ public class ChordNode implements Node {
             System.out.println("Exiting.");
             node.receiverWorker.continueFlag = false;
             continueOperations = false;
-         } else if("fingertable".equalsIgnoreCase(exitStr)) {
+         } else if ("fingertable".equalsIgnoreCase(exitStr)) {
             node.printFingerTable();
-         } else if("details".equalsIgnoreCase(exitStr)) {
+         } else if ("details".equalsIgnoreCase(exitStr)) {
             node.printDetails();
          }
       }
@@ -103,8 +107,13 @@ public class ChordNode implements Node {
 
    }
 
+   private void askSuccessorTOUpdateFingerTable() {
+      // TODO Auto-generated method stub
+      
+   }
+
    private void printFingerTable() {
-      for(int i=0; i<fingerTable.size();i++) {
+      for (int i = 0; i < fingerTable.size(); i++) {
          System.out.println("[" + i + "]" + fingerTable.get(i));
       }
    }
@@ -118,49 +127,65 @@ public class ChordNode implements Node {
    }
 
    private void verifySuccessor() {
-
+      System.out.println("Update Finfer table");
+      UpdateFingerTable updateFingerTable = new UpdateFingerTable();
+      Command response = tcpSender.sendAndReceiveData(successor.ipAddress, successor.port, updateFingerTable.unpack());
+      System.out.println("   Updated.");
    }
 
-   //Find successor from this finger table. Greatest Id less than K
+   // Find successor from this finger table. Greatest Id less than K
    private NodeDetails resolveTragetNode(int k) {
+      
+      System.out.println("Resolving TargetNode");
       int highestId = highestId(k);
-      if(highestId == nodeId) {
-         NodeDetails response = new NodeDetails(nodeIP, nodePort, highestId, true, "Resolved Highest Id in finger table");
+      System.out.println("   Highest Id:" + highestId);
+      NodeDetails response = null;
+      if (highestId == nodeId) {
+         response = new NodeDetails(nodeIP, nodePort, highestId, true, "Resolved Highest Id in finger table");
          response.mySuccessorId = this.successor.id;
-         return response;
-      } else {         
-         return new NodeDetails("", -1, highestId, false, "Resolved Highest Id in finger table");
+      } else if (successor!=null && successor.port!=-1 && successor.id == highestId) {
+         response =  new NodeDetails(successor.ipAddress, successor.port, highestId, true, "Resolved Highest Id in finger table");
+      } else if (predecessor!=null && predecessor.port!=-1 && predecessor.id == highestId) {
+         response =  new NodeDetails(predecessor.ipAddress, predecessor.port, highestId, true, "Resolved Highest Id in finger table");
+      } else {
+         response =  new NodeDetails("", -1, highestId, true, "Resolved Highest Id in finger table");
       }
+      
+      System.out.println("   Returning: " + response);
+      return response;
    }
 
    public int highestId(int k) {
       int highestId = -1;
-      
+
+      if (fingerTable.isEmpty()) {
+         return highestId;
+      }
+
       List<Integer> sortedFingerTable = new ArrayList<>(fingerTable);
       Collections.sort(sortedFingerTable);
-      if(k < sortedFingerTable.get(0)) {
+      if (k < sortedFingerTable.get(0)) {
          highestId = sortedFingerTable.get(0);
       } else {
-         for(int i=0; i<sortedFingerTable.size()-1; i++) {
+         for (int i = 0; i < sortedFingerTable.size() - 1; i++) {
             int j = sortedFingerTable.get(i);
-            int jPlusOne = sortedFingerTable.get(i+1);
-            
-            if(j <= k) {
+            int jPlusOne = sortedFingerTable.get(i + 1);
+
+            if (j <= k) {
                highestId = j;
             }
-            
+
             // 4 5 6
             if (j < k && k <= jPlusOne) {
                highestId = jPlusOne;
             }
-            
+
             // 9 19 9
-            if(k > jPlusOne) {
+            if (k > jPlusOne) {
                highestId = jPlusOne;
             }
          }
       }
-      System.out.println(highestId);
       return highestId;
    }
 
@@ -170,58 +195,118 @@ public class ChordNode implements Node {
    }
 
    private void buildFingerTable() {
-      // TODO Auto-generated method stub
+      System.out.println("Building finger table");
+      fingerTable.clear();
+      if (nodeId == successor.id) { // First Node condition
+         for (int i = 0; i < SYSTEM_SIZE_IN_BITS; i++) {
+            fingerTable.add(nodeId);
+         }
+      } else {
+
+         int maxK = (int) Math.pow(2, SYSTEM_SIZE_IN_BITS);
+
+         int succID = successor.id;
+
+         for (int i = 0; i < SYSTEM_SIZE_IN_BITS; i++) {
+            int k = nodeId + (int) Math.pow(2, i);
+            System.out.println("   k=" + k);
+            
+            if (succID >= k) {
+               fingerTable.add(successor.id);
+               System.out.println("   FT[" + k + "]=" + successor.id);
+            } else {
+               // its beyond successor.
+               if(k >= maxK) {
+                  k = k % maxK;
+                  System.out.println("   Adjusted K=" + k);
+               }
+               
+               NodeDetails succ = findSuccessor(successor, k);
+               System.out.println("   " + succ);
+               fingerTable.add(succ.id);
+               System.out.println("   FT[" + k + "]=" + succ.id);
+            }
+         }
+      }
 
    }
 
-   //Find node.id >= k
-   public NodeDetails findSuccessor(NodeDetails fromNode) {
+   private NodeDetails getNodeDetails(NodeDetails from, int k, int originId) {
+
+      GetSuccessor successor = new GetSuccessor();
+      NodeDetails scrDetails = (NodeDetails) tcpSender.sendAndReceiveData(from.ipAddress, from.port, successor.unpack());
+      
+      if(scrDetails.id == k) {
+         return scrDetails;
+      }
+            
+      if(scrDetails.id == originId) {
+         return new NodeDetails("", -1, k, false, "Not Found");
+      }
+
+      return getNodeDetails(scrDetails, k, originId);
+   }
+
+   // Find node.id >= k
+   public NodeDetails findSuccessor(NodeDetails fromNode, int k) {
       // 3. Ask for your successor
-      System.out.println("Asking successor detail to: " + fromNode);
-      ResolveSuccessorInFingerTableMessage asm = new ResolveSuccessorInFingerTableMessage(nodeIP, nodePort, nodeId);
-      NodeDetails succNode = (NodeDetails) tcpSender.sendAndReceiveData(fromNode.ipAddress, fromNode.port, asm.unpack());
+      System.out.println("   for k[" + k + "]Asking successor detail to: " + fromNode);
+      ResolveSuccessorInFingerTableMessage asm =
+            new ResolveSuccessorInFingerTableMessage("", -1, k);
+      NodeDetails succNode = (NodeDetails) tcpSender.sendAndReceiveData(fromNode.ipAddress,
+            fromNode.port, asm.unpack());
+
+      System.out.println("   Suggested Successor :" + succNode);
+      if (succNode.port == -1) {
+         succNode = getNodeDetails(fromNode, succNode.id, fromNode.id);
+         System.out.println("Resolved: " + succNode);
+      }
       
-      System.out.println(succNode);
-      
+      if (succNode.port == -1) {
+         throw new RuntimeException("   Can not find your successor.");
+      }
+
+
       boolean found = false;
 
-      //CONDITION:1 Node(id) > = k
-      found = succNode.id >= nodeId;
-      
-      
-      //CONDITION:2
+      // CONDITION:1 Node(id) > = k
+      found = succNode.id >= k;
+
+
+      // CONDITION:2
       /**
        * Successor is the only node in the chord. successor id will be same as it's predecessor id.
        */
-      if(!found)
+      if (!found)
          found = succNode.id == succNode.mySuccessorId;
-      
-      
-      //CONDITION3:
+
+
+      // CONDITION3:
       /**
        * k=29 from peer 28 (Page3 of Assignment).
        * 
-       * Given: Node(28)'s succ is Node(1). 
-       * Expected result is: Node(1). This condition can not be solved using given mathematical function Node(id) > = k
+       * Given: Node(28)'s succ is Node(1). Expected result is: Node(1). This condition can not be
+       * solved using given mathematical function Node(id) > = k
        * 
-       * When Node(28) will be asked to resolve 29, it will return 14 and this will go into infinite loop.
-       * Find when Chord re-starts condition and that is the successor.
+       * When Node(28) will be asked to resolve 29, it will return 14 and this will go into infinite
+       * loop. Find when Chord re-starts condition and that is the successor.
        * 
-       * k > succNode(Id) AND succNode(Id) > SUCC(succNode(Id)) then return SUCC(succNode(Id)). 
+       * k > succNode(Id) AND succNode(Id) > SUCC(succNode(Id)) then return SUCC(succNode(Id)).
        */
-      if(!found) {
-         found = (nodeId > succNode.id && succNode.id > succNode.mySuccessorId);
-         //return node details with ID succNode.mySuccessorId
+      if (!found && nodeId > succNode.id && succNode.id > succNode.mySuccessorId) {
+         found = true;
+         // return node details with ID succNode.mySuccessorId
          GetSuccessor getSuccessor = new GetSuccessor();
-         succNode = (NodeDetails) tcpSender.sendAndReceiveData(succNode.ipAddress, succNode.port, getSuccessor.unpack());
+         succNode = (NodeDetails) tcpSender.sendAndReceiveData(succNode.ipAddress, succNode.port,
+               getSuccessor.unpack());
       }
-      
-      if(!found) {
-         findSuccessor(succNode);
+
+      if (!found) {
+         findSuccessor(succNode, k);
       }
-      
+
       return succNode;
-      
+
       // 2.x Has reached target??? receivedNode:ID >= myId:K
       // If no then repeat Point 2 with this receivedNode
       // If yes, go to step 3 (So we have found Successor, lets say Z
@@ -231,36 +316,55 @@ public class ChordNode implements Node {
 
    private void insertIntoChord() throws Exception {
 
-      // 1. Ask discovery to return you a random node. (Send your id so that discovery returns you other node).
-      ReturnRandomNodeCommand randomNodeRequest = new ReturnRandomNodeCommand(nodeIP, nodePort, nodeId);
-      NodeDetails randomNode = (NodeDetails) tcpSender.sendAndReceiveData(discoveryIP, discoveryPORT, randomNodeRequest.unpack());
-      System.out.println(randomNode);
-      
-      // 2. Check very first node condition. Successor will be same as random node. Or Random node's id will be same as mine.
-      if(randomNode.id == nodeId) {
-         System.out.println("I am the first node in system.");
-         buildInitialFingerTable();
+      System.out.println("Insert into Chord.");
+      // 1. Ask discovery to return you a random node. (Send your id so that discovery returns you
+      // other node).
+      ReturnRandomNodeCommand randomNodeRequest =
+            new ReturnRandomNodeCommand(nodeIP, nodePort, nodeId);
+      NodeDetails randomNode = (NodeDetails) tcpSender.sendAndReceiveData(discoveryIP,
+            discoveryPORT, randomNodeRequest.unpack());
+      System.out.println("   RandomNode:" + randomNode);
+
+      // 2. Check very first node condition. Successor will be same as random node. Or Random node's
+      // id will be same as mine.
+      if (randomNode.id == nodeId) {
+         System.out.println("   I am the first node in system.");
          this.predecessor = new NodeDetails(nodeIP, nodePort, nodeId, true, "");
-         this.successor = new NodeDetails(nodeIP, nodePort, nodeId, true, ""); //Redundant but kept for ip/port
-         
-         System.out.println("built the finger table.");
+         this.successor = new NodeDetails(nodeIP, nodePort, nodeId, true, ""); // Redundant but kept
+                                                                               // for ip/port
+
       } else {
-         System.out.println("I am NOT the first node in system.");
-         NodeDetails successor = findSuccessor(randomNode);
-         System.out.println("Successor : " + successor);
-         
-         //My successor is you. Set successor as your successor
+         System.out.println("   I am NOT the first node in system. Findign Successor.");
+         NodeDetails successor = findSuccessor(randomNode, nodeId);
+         System.out.println("   Successor : " + successor);
+
+         // My successor is you. Set successor as your successor
          this.successor = successor;
+         // Create the Ring for the first time.
+         if (successor.id == successor.mySuccessorId) {
+            this.predecessor = successor;
+         }
          
          // Your predecessor is me
-         SetMeAsPredecessor setMeAsPredecessor = new SetMeAsPredecessor(this.nodeIP, this.nodePort, nodeId);
-         tcpSender.sendAndReceiveData(successor.ipAddress, successor.port, setMeAsPredecessor.unpack());
-         
-         //My Predecessor ???
+         SetMeAsPredecessor setMeAsPredecessor =
+               new SetMeAsPredecessor(this.nodeIP, this.nodePort, nodeId);
+         tcpSender.sendAndReceiveData(successor.ipAddress, successor.port,
+               setMeAsPredecessor.unpack());
+
+         // Create the Ring for the first time.
+         if (successor.id == successor.mySuccessorId) {
+
+            SetMeAsSuccessor setMeAsSuccessor =
+                  new SetMeAsSuccessor(this.nodeIP, this.nodePort, nodeId);
+            tcpSender.sendAndReceiveData(successor.ipAddress, successor.port,
+                  setMeAsSuccessor.unpack());
+         }
+
+         // My Predecessor ???
          // PRED(succ) is still pointing to succ
-         
+
       }
-      
+
 
       // 4. Insert your self (lets say Y) as PRED of succ.
       // Pred(Z) was X now Pred(Z) will be this node Y
@@ -271,69 +375,18 @@ public class ChordNode implements Node {
       // Also TRANSFER data which is <= y(id) from Z to Y(this node).
    }
 
-   private void buildInitialFingerTable() {
-      for(int i=1; i<=SYSTEM_SIZE_IN_BITS;i++) {
-//         double succOf = nodeId + Math.pow(2, (i-1));
-         fingerTable.add(nodeId);
-      }
-      
-   }
-
    private void registerWithDiscoveryNode() throws Exception {
       System.out.println("Registering with discovery node.");
       RegistgerCommand command = new RegistgerCommand(nodeIP, nodePort, nodeId);
       Command resp = tcpSender.sendAndReceiveData(discoveryIP, discoveryPORT, command.unpack());
-      System.out.println(resp);
-      
+      System.out.println("   " + resp);
+
       Response response = (Response) resp;
-      if(!response.isSuccess()) {
+      if (!response.isSuccess()) {
          throw new RuntimeException("Node Id already exist. Please use another id");
       }
    }
-
-   // private void sendStatistics() throws Exception {
-   // Socket socket = null;
-   // try {
-   // System.out.println("Connecting to Collator @:" + discoveryIP + ":" + discoveryPORT);
-   // socket = new Socket(discoveryIP, discoveryPORT);
-   // sendStatistics(socket);
-   // } catch (Exception e) {
-   // e.printStackTrace();
-   // } finally {
-   // if (socket != null)
-   // socket.close();
-   // }
-   // }
-
-   // private void sendStatistics(Socket socket) throws Exception {
-   // DataOutputStream dout = null;
-   // try {
-   // dout = new DataOutputStream(socket.getOutputStream());
-   // int length = getNodeName().length();
-   // byte[] nodeNameAsBytes = getNodeName().getBytes();
-   // dout.writeInt(length);
-   // dout.write(nodeNameAsBytes);
-   // dout.writeInt(sender.getSendCounter());
-   // dout.writeDouble(sender.getSumOfDataSent());
-   // dout.flush();
-   // } catch (Exception e) {
-   // e.printStackTrace();
-   // } finally {
-   // if (dout != null)
-   // dout.close();
-   // }
-   // printStatistics();
-   // }
-   //
-   // private void printStatistics() {
-   // System.out.println("sent....");
-   // System.out.println(sender.getSendCounter());
-   // System.out.println(sender.getSumOfDataSent());
-   // System.out.println(receiverWorker.getReceiveCounter());
-   // System.out.println(receiverWorker.getPayloadTotal());
-   //
-   // }
-
+   
    public void intializeServerNode() throws IOException {
       System.out.println("Initializing Node ...");
 
@@ -388,22 +441,29 @@ public class ChordNode implements Node {
    public Command notify(Command command) {
       System.out.println("Received command >> " + command);
       Command response = new NodeDetails("", -1, -1, true, "Nothing");
-      if(command instanceof ResolveSuccessorInFingerTableMessage) {
+      if (command instanceof ResolveSuccessorInFingerTableMessage) {
          ResolveSuccessorInFingerTableMessage asm = (ResolveSuccessorInFingerTableMessage) command;
          response = resolveTragetNode(asm.id);
-         
-      } else if(command instanceof SetMeAsSuccessor) {
+      } else if (command instanceof SetMeAsSuccessor) {
          SetMeAsSuccessor msg = (SetMeAsSuccessor) command;
          response = successorChanged(msg);
-      } else if(command instanceof SetMeAsPredecessor) {
+      } else if (command instanceof SetMeAsPredecessor) {
          SetMeAsPredecessor msg = (SetMeAsPredecessor) command;
          response = predecessorChanged(msg);
-      } else if(command instanceof GetSuccessor) {
-//         GetSuccessor msg = (GetSuccessor) command;
+      } else if (command instanceof GetSuccessor) {
+         // GetSuccessor msg = (GetSuccessor) command;
          response = getSuccessor();
+      } else if (command instanceof UpdateFingerTable) {
+         // GetSuccessor msg = (GetSuccessor) command;
+         response = updateFingerTable();
       }
-      System.out.println("Response: " + response);
+//      System.out.println("Response: " + response);
       return response;
+   }
+
+   private Command updateFingerTable() {
+      buildFingerTable();
+      return new Response(true, "Fingertable updated");
    }
 
    private NodeDetails getSuccessor() {
@@ -412,11 +472,17 @@ public class ChordNode implements Node {
 
    private Command predecessorChanged(SetMeAsPredecessor msg) {
       this.predecessor = new NodeDetails(msg.ipAddress, msg.port, msg.id, true, "");
+      System.out.println("");
+      printDetails();
       return new Response(true, "Predecessor set");
    }
 
    private Command successorChanged(SetMeAsSuccessor msg) {
+      fingerTable.remove(0);
+      fingerTable.add(0, msg.id);
       this.successor = new NodeDetails(msg.ipAddress, msg.port, msg.id, true, "");
+      System.out.println("");
+      printDetails();
       return new Response(false, "????");
    }
 
