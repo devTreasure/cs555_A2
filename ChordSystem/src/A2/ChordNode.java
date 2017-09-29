@@ -73,7 +73,7 @@ public class ChordNode implements Node {
       node.intializeServerNode();
       node.registerWithDiscoveryNode();
       node.insertIntoChord();
-//      node.buildFingerTable();
+      node.buildFingerTable();
 //      node.tarnsferData();
 
       // ---------------
@@ -103,13 +103,13 @@ public class ChordNode implements Node {
 
    }
 
-   private void printDetails() {
+   private void printFingerTable() {
       for(int i=0; i<fingerTable.size();i++) {
          System.out.println("[" + i + "]" + fingerTable.get(i));
       }
    }
 
-   private void printFingerTable() {
+   private void printDetails() {
       System.out.println("");
       System.out.println("Successor: " + successor);
       System.out.println("Predecessor: " + predecessor);
