@@ -22,8 +22,8 @@ public class CommandFactory {
                   RegistgerCommand registgerCommand = new RegistgerCommand();
                   registgerCommand.pack(din);
                   cmd = registgerCommand;
-             } else if (RegisterReponse.cmd.equals(str_request_type)) {
-                  RegisterReponse registerReponse = new RegisterReponse();
+             } else if (Response.cmd.equals(str_request_type)) {
+                  Response registerReponse = new Response();
                   registerReponse.pack(din);
                   cmd = registerReponse;
              } else if(ReturnRandomNodeCommand.cmd.equals(str_request_type)) {
@@ -34,19 +34,35 @@ public class CommandFactory {
                 NodeDetails command = new NodeDetails();
                 command.pack(din);
                 cmd = command;
-             } else if(AskSuccessorMessage.cmd.equals(str_request_type)) {
-                AskSuccessorMessage command = new AskSuccessorMessage();
+             } else if(ResolveSuccessorInFingerTableMessage.cmd.equals(str_request_type)) {
+                ResolveSuccessorInFingerTableMessage command = new ResolveSuccessorInFingerTableMessage();
                 command.pack(din);
                 cmd = command;
-             }
-             
-             else {
+             } else if (SetMeAsPredecessor.cmd.equals(str_request_type)) {
+                SetMeAsPredecessor command = new SetMeAsPredecessor();
+                command.pack(din);
+                cmd = command;
+             } else if (SetMeAsSuccessor.cmd.equals(str_request_type)) {
+                SetMeAsSuccessor command = new SetMeAsSuccessor();
+                command.pack(din);
+                cmd = command;
+             } else if(GetSuccessor.cmd.equals(str_request_type)) {
+                GetSuccessor command = new GetSuccessor();
+                command.pack(din);
+                cmd = command;
+             } else {
                 System.out.println("ERROR: UNKNOWN COMMAND. " + str_request_type);
              }
              
         } catch (Exception e) {
              e.printStackTrace();
-        }
+        } finally {
+//         try {
+//            din.close();
+//         } catch (IOException e) {
+//            e.printStackTrace();
+//         }
+      }
 
         System.out.println("Created:" + cmd);
         return cmd;

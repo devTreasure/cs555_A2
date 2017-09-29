@@ -6,19 +6,27 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class NodeDetails implements Command {
-   public static final String cmd = "CMD_NodeDetails";
+public class SetMeAsSuccessor implements Command {
 
+   public static final String cmd = "CMD_SetMeAsSuccessor";
+   
    public String ipAddress;
    public int port;
    public int id;
    public boolean hasData;
    public String message = "";
-   public int mySuccessorId = -1;
 
-   public NodeDetails() {}
+   public SetMeAsSuccessor() {}
 
-   public NodeDetails(String ipAddress, int port, int id, boolean hasData, String message) {
+   public SetMeAsSuccessor(String ipAddress, int port, int id) {
+      this.ipAddress = ipAddress;
+      this.port = port;
+      this.id = id;
+      this.hasData = true;
+      this.message = "";
+   }
+   
+   public SetMeAsSuccessor(String ipAddress, int port, int id, boolean hasData, String message) {
       this.ipAddress = ipAddress;
       this.port = port;
       this.id = id;
@@ -44,7 +52,6 @@ public class NodeDetails implements Command {
          dout.writeBoolean(hasData);
          dout.writeInt(message.length());
          dout.write(message.getBytes());
-         dout.writeInt(mySuccessorId);
          dout.flush();
          marshalledBytes = baOutputStream.toByteArray();
       } catch (Exception e) {
@@ -68,7 +75,6 @@ public class NodeDetails implements Command {
          id = din.readInt();
          hasData = din.readBoolean();
          message = readString(din);
-         mySuccessorId = din.readInt();
       } catch (IOException e) {
          e.printStackTrace();
       }
@@ -83,8 +89,8 @@ public class NodeDetails implements Command {
 
    @Override
    public String toString() {
-      return "NodeDetails [ipAddress=" + ipAddress + ", port=" + port + ", id=" + id + ", hasData="
-            + hasData + ", message=" + message + ", mySuccessorId=" + mySuccessorId + "]";
+      return "SetMeAsSuccessor [ipAddress=" + ipAddress + ", port=" + port + ", id=" + id
+            + ", hasData=" + hasData + ", message=" + message + "]";
    }
-
+   
 }

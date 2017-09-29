@@ -6,27 +6,20 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class NodeDetails implements Command {
-   public static final String cmd = "CMD_NodeDetails";
+public class Response implements Command {
 
-   public String ipAddress;
-   public int port;
-   public int id;
-   public boolean hasData;
-   public String message = "";
-   public int mySuccessorId = -1;
+   public static final String cmd = "CMD_Reponse";
+   private boolean success;
+   private String message;
 
-   public NodeDetails() {}
-
-   public NodeDetails(String ipAddress, int port, int id, boolean hasData, String message) {
-      this.ipAddress = ipAddress;
-      this.port = port;
-      this.id = id;
-      this.hasData = hasData;
-      this.message = message;
+   public Response(boolean success, String message) {
+      this.success = success;
+      this.message = message!=null ? message : "";
    }
 
-   @Override
+   public Response() {
+   }
+
    public byte[] unpack() {
       byte[] marshalledBytes = null;
       ByteArrayOutputStream baOutputStream = null;
@@ -37,14 +30,9 @@ public class NodeDetails implements Command {
          dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
          dout.writeInt(cmd.length());
          dout.write(cmd.getBytes());
-         dout.writeInt(ipAddress.length());
-         dout.write(ipAddress.getBytes());
-         dout.writeInt(port);
-         dout.writeInt(id);
-         dout.writeBoolean(hasData);
+         dout.writeBoolean(success);
          dout.writeInt(message.length());
          dout.write(message.getBytes());
-         dout.writeInt(mySuccessorId);
          dout.flush();
          marshalledBytes = baOutputStream.toByteArray();
       } catch (Exception e) {
@@ -60,15 +48,10 @@ public class NodeDetails implements Command {
       return marshalledBytes;
    }
 
-   @Override
    public void pack(DataInputStream din) {
       try {
-         ipAddress = readString(din);
-         port = din.readInt();
-         id = din.readInt();
-         hasData = din.readBoolean();
+         success = din.readBoolean();
          message = readString(din);
-         mySuccessorId = din.readInt();
       } catch (IOException e) {
          e.printStackTrace();
       }
@@ -83,8 +66,15 @@ public class NodeDetails implements Command {
 
    @Override
    public String toString() {
-      return "NodeDetails [ipAddress=" + ipAddress + ", port=" + port + ", id=" + id + ", hasData="
-            + hasData + ", message=" + message + ", mySuccessorId=" + mySuccessorId + "]";
+      return "Reponse [success=" + success + ", message=" + message + "]";
    }
 
+   public boolean isSuccess() {
+      return success;
+   }
+
+   public String getMessage() {
+      return message;
+   }
+   
 }

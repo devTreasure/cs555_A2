@@ -6,9 +6,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class AskSuccessorMessage implements Command {
+public class SetMeAsPredecessor implements Command {
 
-   public static final String cmd = "CMD_AskSuccessorMessage";
+   public static final String cmd = "CMD_SetMeAsPredecessor";
    
    public String ipAddress;
    public int port;
@@ -16,22 +16,22 @@ public class AskSuccessorMessage implements Command {
    public boolean hasData;
    public String message = "";
 
-   public AskSuccessorMessage() {}
+   public SetMeAsPredecessor() {}
 
-   public AskSuccessorMessage(String ipAddress, int port, int id, boolean hasData, String message) {
-      this.ipAddress = ipAddress;
-      this.port = port;
-      this.id = id;
-      this.hasData = hasData;
-      this.message = message;
-   }
-   
-   public AskSuccessorMessage(String ipAddress, int port, int id) {
+   public SetMeAsPredecessor(String ipAddress, int port, int id) {
       this.ipAddress = ipAddress;
       this.port = port;
       this.id = id;
       this.hasData = true;
       this.message = "";
+   }
+   
+   public SetMeAsPredecessor(String ipAddress, int port, int id, boolean hasData, String message) {
+      this.ipAddress = ipAddress;
+      this.port = port;
+      this.id = id;
+      this.hasData = hasData;
+      this.message = message;
    }
 
    @Override
@@ -89,8 +89,8 @@ public class AskSuccessorMessage implements Command {
 
    @Override
    public String toString() {
-      return "AskSuccessorMessage [ipAddress=" + ipAddress + ", port=" + port + ", id=" + id
+      return "SetMeAsPredecessor [ipAddress=" + ipAddress + ", port=" + port + ", id=" + id
             + ", hasData=" + hasData + ", message=" + message + "]";
    }
-
+   
 }

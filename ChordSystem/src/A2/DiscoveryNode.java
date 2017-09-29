@@ -10,7 +10,7 @@ import java.util.Random;
 
 import A2.message.Command;
 import A2.message.NodeDetails;
-import A2.message.RegisterReponse;
+import A2.message.Response;
 import A2.message.RegistgerCommand;
 import A2.message.ReturnRandomNodeCommand;
 
@@ -60,11 +60,11 @@ public class DiscoveryNode implements Node {
             System.out.println("Exiting.");
             node.receiverWorkerThread.stop();
             continueOperations = false;
-         }
+         } 
       }
       System.out.println("Bye.");
    }
-
+   
    public void intializeServerNode() throws IOException {
       System.out.println("Initializing Node ...");
 
@@ -108,14 +108,20 @@ public class DiscoveryNode implements Node {
       if(size == 0) {
          response = new NodeDetails("", -1, -1, false, "No registerd nodes.");
       } else {
-         int nextInt = random.nextInt(size);
          Object[] valuesAsArray = registry.values().toArray();
-         response = (NodeDetails) valuesAsArray[nextInt];
-         if(response.id == command.id && size==1) {
-            nextInt = random.nextInt(size);
-            response = (NodeDetails) valuesAsArray[nextInt];
-            if(response.id == command.id) {
-               System.out.println("ERROR: This should not happen ---------------");
+
+         if(size == 1) {
+            response = (NodeDetails) valuesAsArray[0];
+         } else {
+            for(int i=0; i<100;i++) {
+               int nextInt = random.nextInt(size);
+               System.out.println(nextInt);
+               response = (NodeDetails) valuesAsArray[nextInt];
+               if(response.id == command.id) {
+                  continue;
+               } else {
+                  break;
+               }
             }
          }
       }
@@ -125,14 +131,14 @@ public class DiscoveryNode implements Node {
    }
 
    private Command registerNode(RegistgerCommand command) throws Exception {
-      RegisterReponse response = null;
+      Response response = null;
       if(command==null) {
-         response = new RegisterReponse(false, "Invalid command");  
+         response = new Response(false, "Invalid command");  
       } else if(registry.containsKey(command.id)) {
-         response = new RegisterReponse(false, "ID already registered");
+         response = new Response(false, "ID already registered");
       } else {
          registry.put(command.id, new NodeDetails(command.ipAddress, command.port, command.id, true, ""));
-         response = new RegisterReponse(true, "Registered.");
+         response = new Response(true, "Registered.");
       }
       System.out.println("Response is:" + response);
       return response;

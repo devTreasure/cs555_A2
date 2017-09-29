@@ -6,20 +6,35 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class RegisterReponse implements Command {
+public class ResolveSuccessorInFingerTableMessage implements Command {
 
-   public static final String cmd = "CMD_RegisterReponse";
-   private boolean success;
-   private String message;
+   public static final String cmd = "CMD_ResolveSuccessorInFingerTableMessage";
+   
+   public String ipAddress;
+   public int port;
+   public int id;
+   public boolean hasData;
+   public String message = "";
 
-   public RegisterReponse(boolean success, String message) {
-      this.success = success;
-      this.message = message!=null ? message : "";
+   public ResolveSuccessorInFingerTableMessage() {}
+
+   public ResolveSuccessorInFingerTableMessage(String ipAddress, int port, int id, boolean hasData, String message) {
+      this.ipAddress = ipAddress;
+      this.port = port;
+      this.id = id;
+      this.hasData = hasData;
+      this.message = message;
+   }
+   
+   public ResolveSuccessorInFingerTableMessage(String ipAddress, int port, int id) {
+      this.ipAddress = ipAddress;
+      this.port = port;
+      this.id = id;
+      this.hasData = true;
+      this.message = "";
    }
 
-   public RegisterReponse() {
-   }
-
+   @Override
    public byte[] unpack() {
       byte[] marshalledBytes = null;
       ByteArrayOutputStream baOutputStream = null;
@@ -30,7 +45,11 @@ public class RegisterReponse implements Command {
          dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
          dout.writeInt(cmd.length());
          dout.write(cmd.getBytes());
-         dout.writeBoolean(success);
+         dout.writeInt(ipAddress.length());
+         dout.write(ipAddress.getBytes());
+         dout.writeInt(port);
+         dout.writeInt(id);
+         dout.writeBoolean(hasData);
          dout.writeInt(message.length());
          dout.write(message.getBytes());
          dout.flush();
@@ -48,9 +67,13 @@ public class RegisterReponse implements Command {
       return marshalledBytes;
    }
 
+   @Override
    public void pack(DataInputStream din) {
       try {
-         success = din.readBoolean();
+         ipAddress = readString(din);
+         port = din.readInt();
+         id = din.readInt();
+         hasData = din.readBoolean();
          message = readString(din);
       } catch (IOException e) {
          e.printStackTrace();
@@ -66,15 +89,8 @@ public class RegisterReponse implements Command {
 
    @Override
    public String toString() {
-      return "RegisterReponse [success=" + success + ", message=" + message + "]";
+      return "ResolveSuccessorInFingerTableMessage [ipAddress=" + ipAddress + ", port=" + port + ", id=" + id
+            + ", hasData=" + hasData + ", message=" + message + "]";
    }
 
-   public boolean isSuccess() {
-      return success;
-   }
-
-   public String getMessage() {
-      return message;
-   }
-   
 }
