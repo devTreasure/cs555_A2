@@ -13,6 +13,7 @@ import java.util.List;
 import A2.message.Command;
 import A2.message.GetSuccessor;
 import A2.message.NodeDetails;
+import A2.message.PredecessorDetail;
 import A2.message.RegistgerCommand;
 import A2.message.ResolveSuccessorInFingerTableMessage;
 import A2.message.Response;
@@ -45,6 +46,10 @@ public class ChordNode implements Node {
    private NodeDetails predecessor;
 
    private static ChordNode node;
+
+   private Thread neighbourUpdaterThread;
+
+   private NeighbourUpdaterWorker neighbourUpdaterWorker;
 
    public static void main(String[] args) throws Exception {
       int discoverPORT = 0;
@@ -83,10 +88,10 @@ public class ChordNode implements Node {
       // ---------------
       int k = 0;
       // Will find smallest id >= K
-      node.verifySuccessor();
+//      node.verifySuccessor();
 
       boolean continueOperations = true;
-
+      
       while (continueOperations) {
          BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
          String exitStr = br.readLine();
@@ -95,6 +100,7 @@ public class ChordNode implements Node {
          if ("exit".equalsIgnoreCase(exitStr)) {
             System.out.println("Exiting.");
             node.receiverWorker.continueFlag = false;
+            node.neighbourUpdaterWorker.continueFlag = false;
             continueOperations = false;
          } else if ("fingertable".equalsIgnoreCase(exitStr)) {
             node.printFingerTable();
@@ -108,7 +114,11 @@ public class ChordNode implements Node {
    }
 
    private void askSuccessorTOUpdateFingerTable() {
-      // TODO Auto-generated method stub
+      System.out.println("Update Finfer table");
+      UpdateFingerTable updateFingerTable = new UpdateFingerTable();
+      Command response = tcpSender.sendAndReceiveData(successor.ipAddress, successor.port, updateFingerTable.unpack());
+      System.out.println("   Updated.");
+      
       
    }
 
@@ -126,11 +136,35 @@ public class ChordNode implements Node {
       System.out.println("");
    }
 
-   private void verifySuccessor() {
-      System.out.println("Update Finfer table");
-      UpdateFingerTable updateFingerTable = new UpdateFingerTable();
-      Command response = tcpSender.sendAndReceiveData(successor.ipAddress, successor.port, updateFingerTable.unpack());
-      System.out.println("   Updated.");
+   public void verifyNeighbours() {
+      //Ask SUC about it's PRED
+      //If not you then update
+//      System.out.println("Verifying Neighbours");
+      
+      if(nodeId == successor.id) {
+         return;
+      }
+      
+      PredecessorDetail predecessorDetail = new PredecessorDetail();
+      NodeDetails predOfSuc = (NodeDetails) tcpSender.sendAndReceiveData(successor.ipAddress, successor.port, predecessorDetail.unpack());
+      
+      if(predOfSuc.id != nodeId) {
+         System.out.println("   predOfSuc:" + predOfSuc);
+         //change
+         //set  PRED as your succ
+         this.successor = predOfSuc;
+         this.fingerTable.remove(0);
+         this.fingerTable.add(0, predOfSuc.id);
+         
+         //set me as your pred
+         SetMeAsPredecessor setMeAsPredecessor = new SetMeAsPredecessor(this.nodeIP, this.nodePort, this.nodeId);
+         Command respo = tcpSender.sendAndReceiveData(predOfSuc.ipAddress, predOfSuc.port, setMeAsPredecessor.unpack());
+         System.out.println("   " + respo);
+         
+         buildFingerTable();
+         printDetails();
+      }
+      
    }
 
    // Find successor from this finger table. Greatest Id less than K
@@ -400,6 +434,10 @@ public class ChordNode implements Node {
       receiverWorker = new ReceiverWorker(serversocket, this);
       receiverWorkerThread = new Thread(receiverWorker);
       receiverWorkerThread.start();
+      
+      neighbourUpdaterWorker = new NeighbourUpdaterWorker(this);
+      neighbourUpdaterThread = new Thread(neighbourUpdaterWorker);
+      neighbourUpdaterThread.start();
 
       System.out.println(this);
       System.out.println("node started ...");
@@ -438,8 +476,10 @@ public class ChordNode implements Node {
    }
 
    @Override
-   public Command notify(Command command) {
-      System.out.println("Received command >> " + command);
+   public Command notify(Command command) throws Exception {
+      if(!(command instanceof PredecessorDetail)) {
+         System.out.println("Received command >> " + command);
+      }
       Command response = new NodeDetails("", -1, -1, true, "Nothing");
       if (command instanceof ResolveSuccessorInFingerTableMessage) {
          ResolveSuccessorInFingerTableMessage asm = (ResolveSuccessorInFingerTableMessage) command;
@@ -456,12 +496,14 @@ public class ChordNode implements Node {
       } else if (command instanceof UpdateFingerTable) {
          // GetSuccessor msg = (GetSuccessor) command;
          response = updateFingerTable();
+      } else if(command instanceof PredecessorDetail) {
+         response = predecessor;
       }
 //      System.out.println("Response: " + response);
       return response;
    }
 
-   private Command updateFingerTable() {
+   private Command updateFingerTable() throws Exception {
       buildFingerTable();
       return new Response(true, "Fingertable updated");
    }

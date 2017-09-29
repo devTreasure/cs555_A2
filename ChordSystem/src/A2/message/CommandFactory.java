@@ -54,7 +54,12 @@ public class CommandFactory {
                 UpdateFingerTable command = new UpdateFingerTable();
                 command.pack(din);
                 cmd = command;
+             }  else if(PredecessorDetail.cmd.equals(str_request_type)) {
+                PredecessorDetail command = new PredecessorDetail();
+                command.pack(din);
+                cmd = command;
              }
+             
              else {
                 System.out.println("ERROR: UNKNOWN COMMAND. " + str_request_type);
              }
