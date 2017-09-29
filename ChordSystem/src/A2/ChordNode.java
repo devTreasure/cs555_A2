@@ -106,6 +106,9 @@ public class ChordNode implements Node {
             node.printFingerTable();
          } else if ("details".equalsIgnoreCase(exitStr)) {
             node.printDetails();
+         } else if ("updateft".equalsIgnoreCase(exitStr)) {
+            node.buildFingerTable();
+            node.printDetails();
          }
       }
 
@@ -171,7 +174,7 @@ public class ChordNode implements Node {
    private NodeDetails resolveTragetNode(int k) {
       
       System.out.println("Resolving TargetNode");
-      int highestId = highestId(k);
+      int highestId = highestIdLessThanEqualTo(k);
       System.out.println("   Highest Id:" + highestId);
       NodeDetails response = null;
       if (highestId == nodeId) {
@@ -189,37 +192,36 @@ public class ChordNode implements Node {
       return response;
    }
 
-   public int highestId(int k) {
+   public int highestIdLessThanEqualTo(int k) {
       int highestId = -1;
-
+      
       if (fingerTable.isEmpty()) {
          return highestId;
       }
 
       List<Integer> sortedFingerTable = new ArrayList<>(fingerTable);
       Collections.sort(sortedFingerTable);
+
       if (k < sortedFingerTable.get(0)) {
          highestId = sortedFingerTable.get(0);
+      } else if (k < fingerTable.get(0)) {
+         highestId = fingerTable.get(0);
       } else {
+
          for (int i = 0; i < sortedFingerTable.size() - 1; i++) {
             int j = sortedFingerTable.get(i);
             int jPlusOne = sortedFingerTable.get(i + 1);
 
-            if (j <= k) {
+            if (j < k) {
                highestId = j;
-            }
-
-            // 4 5 6
-            if (j < k && k <= jPlusOne) {
-               highestId = jPlusOne;
-            }
-
-            // 9 19 9
-            if (k > jPlusOne) {
-               highestId = jPlusOne;
+               if (k < jPlusOne) {
+                  break;
+               }
             }
          }
       }
+       
+      System.out.println(highestId);
       return highestId;
    }
 
@@ -244,16 +246,17 @@ public class ChordNode implements Node {
          for (int i = 0; i < SYSTEM_SIZE_IN_BITS; i++) {
             int k = nodeId + (int) Math.pow(2, i);
             System.out.println("   k=" + k);
+
+            if(k >= maxK) {
+               k = k % maxK;
+               System.out.println("   Adjusted K=" + k);
+            }
             
             if (succID >= k) {
                fingerTable.add(successor.id);
                System.out.println("   FT[" + k + "]=" + successor.id);
             } else {
                // its beyond successor.
-               if(k >= maxK) {
-                  k = k % maxK;
-                  System.out.println("   Adjusted K=" + k);
-               }
                
                NodeDetails succ = findSuccessor(successor, k);
                System.out.println("   " + succ);

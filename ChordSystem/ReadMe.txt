@@ -1,5 +1,14 @@
-How to Run:
-=============
+** Number of Nodes (m bits system) is hard codes as 3 for now. Will be made configurable after testing.
+Its in ChordNode.java
+
+public class ChordNode implements Node {
+
+   public static final int SYSTEM_SIZE_IN_BITS = 3;
+
+
+
+** How to Run:
+==============
 
 1. Go to bin directory. For example d:\Bhavin\CSU\cs555_A2\ChordSystem\bin
 
@@ -24,3 +33,6 @@ TODO:
 - Simplify CommandFactory. Load class from command name as Convention.
 - Synchronozation?
 - Thread to serve each request
+- Test for 5 bit / 7 bit ids
+- As of now id's are in int.
+- Handling of image files.
